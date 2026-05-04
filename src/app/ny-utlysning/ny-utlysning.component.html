@@ -85,7 +85,11 @@
           @for (node of treeData; track node.label) {
             <button
               (click)="selectL0(node)"
-              class="flex items-center justify-between w-full px-3 py-2 text-[14px] text-left border border-[#623fa4] mt-1 text-[#623fa4] bg-white hover:bg-[#eeeaf6] transition-colors">
+              class="flex items-center justify-between w-full px-3 py-2 text-[14px] text-left border border-[#623fa4] mt-1 text-[#623fa4] transition-colors"
+              [class.bg-[#fef9c3]]="node.highlighted"
+              [class.hover:bg-[#fef08a]]="node.highlighted"
+              [class.bg-white]="!node.highlighted"
+              [class.hover:bg-[#eeeaf6]]="!node.highlighted">
               <span class="flex-1 leading-snug">{{ node.label }}</span>
             </button>
           }
@@ -137,7 +141,11 @@
             @for (node of sel0.children; track node.label) {
               <button
                 (click)="selectL1(node)"
-                class="flex items-center justify-between w-full px-3 py-2 text-[14px] text-left border border-[#623fa4] mt-1 text-[#623fa4] bg-white hover:bg-[#eeeaf6] transition-colors">
+                class="flex items-center justify-between w-full px-3 py-2 text-[14px] text-left border border-[#623fa4] mt-1 text-[#623fa4] transition-colors"
+                [class.bg-[#fef9c3]]="node.highlighted"
+                [class.hover:bg-[#fef08a]]="node.highlighted"
+                [class.bg-white]="!node.highlighted"
+                [class.hover:bg-[#eeeaf6]]="!node.highlighted">
                 <span class="flex-1 leading-snug">{{ node.label }}</span>
               </button>
             }

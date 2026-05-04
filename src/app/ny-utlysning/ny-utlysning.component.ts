@@ -5,6 +5,7 @@ import { UtlysningService } from '../utlysning.service';
 
 interface TreeNode {
   label: string;
+  highlighted?: boolean;
   children?: TreeNode[];
 }
 
@@ -64,10 +65,12 @@ export class NyUtlysningComponent {
     { label: 'EU 2027 FRO', children: [] },
     {
       label: 'EU 2027 REG',
+      highlighted: true,
       children: [
         { label: 'Skåne och Blekinge', children: [] },
         {
           label: 'Övre Norrland',
+          highlighted: true,
           children: [
             { label: '1 Ett konkurrenskraftigare och smartare Europa genom främjande av innovativ och smart ekonomisk omvandling och regional IKT-konnektivitet' },
             { label: '3 Ett mer sammanlänkat Europa genom förbättrad mobilitet och regional IKT-konnektivitet' },
