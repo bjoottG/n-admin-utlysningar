@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+button:disabled {
+  background-color: #E9ECEF;
+  color: #ADB5BD;
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  background-color: #E9ECEF;
+  color: #ADB5BD;
+}
+
+@theme {
+  --color-gray-50: #f1f1f4;
+  --color-gray-100: #f8f9fa;
+  --color-gray-200: #c7c9d1;
+  --color-gray-300: #dee2e6;
+  --color-gray-400: #ced4da;
+  --color-gray-500: #6e7a87;
+  --color-gray-600: #6c757d;
+  --color-gray-700: #495057;
+  --color-gray-800: #343a40;
+  --color-gray-900: #212529;
+
+  --color-purple-100: #eeeaf6;
+  --color-purple-200: #dcd4ed;
+  --color-purple-300: #c9b8e1;
+  --color-purple-400: #9e85cb;
+  --color-purple-500: #7854bd;
+  --color-purple-600: #623fa4;
+  --color-purple-700: #4e3283;
+  --color-purple-800: #492069;
+  --color-purple-900: #271941;
+
+  --color-blue-100: #d3ebfd;
+  --color-blue-500: #0076cf;
+  --color-blue-600: #0065b0;
+  --color-blue-900: #00345c;
+
+  --color-red-100: #f9dcdf;
+  --color-red-500: #b01729;
+  --color-red-900: #59050f;
+
+  --color-green-100: #e4f2e8;
+  --color-green-500: #33844e;
+  --color-green-900: #143920;
+
+  --color-orange-100: #fdf7ec;
+  --color-orange-500: #f29810;
+  --color-orange-600: #dc8604;
+
+  --color-primary: var(--color-purple-600);
+  --color-primary-hover: var(--color-purple-700);
+  --color-on-primary: #ffffff;
+  --color-surface-primary: var(--color-purple-100);
+
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-muted: var(--color-gray-100);
+  --color-surface-subtle: var(--color-gray-50);
+  --color-on-surface: var(--color-gray-900);
+
+  --color-text: var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-700);
+  --color-text-muted: var(--color-gray-600);
+  --color-text-subtle: var(--color-gray-500);
+
+  --color-border: var(--color-gray-300);
+  --color-border-muted: var(--color-gray-200);
+
+  --font-sans: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-button: 0;
+
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}

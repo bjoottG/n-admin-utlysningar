@@ -1,0 +1,467 @@
+<div class="min-h-screen flex flex-col bg-[#f1f1f4] font-[SF_Pro_Text,system-ui,sans-serif]">
+
+  <!-- Top Navbar -->
+  <header class="flex items-center gap-0 bg-[#161616] text-white shrink-0 h-12">
+    <div class="flex items-center gap-3 px-4 h-full border-r border-white/10">
+      <svg viewBox="0 0 32 32" class="w-7 h-7 shrink-0">
+        <rect x="2" y="10" width="12" height="12" fill="#34A1F4"/>
+        <rect x="14" y="10" width="12" height="12" fill="#004376"/>
+        <rect x="8" y="18" width="12" height="12" fill="#0065B0"/>
+      </svg>
+      <span class="text-[15px] font-semibold text-white whitespace-nowrap">NYPS Admin</span>
+    </div>
+    <nav class="flex items-stretch h-full flex-1">
+      <a class="flex items-center gap-1.5 px-5 h-full text-[14px] text-[#dee2e6] hover:bg-white/10 cursor-pointer">
+        Administrationsområden
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+      </a>
+    </nav>
+    <a class="flex items-center gap-1.5 px-5 h-full text-[14px] text-[#dee2e6] hover:bg-white/10 cursor-pointer">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+      Demo Demon
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+    </a>
+  </header>
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-1 px-6 py-2 bg-[#f1f1f4]">
+    <a (click)="navigeraTill('/utlysning/ny')" class="text-[13px] text-[#623fa4] hover:underline cursor-pointer">Startsida</a>
+    <span class="text-[13px] text-[#6c757d] mx-0.5">/</span>
+    <a (click)="navigeraTill('/utlysning/ny')" class="text-[13px] text-[#623fa4] hover:underline cursor-pointer">Utlysningar</a>
+    <span class="text-[13px] text-[#6c757d] mx-0.5">/</span>
+    <a (click)="navigeraTill('/utlysning/ny')" class="text-[13px] text-[#623fa4] hover:underline cursor-pointer">Tillväxtverket</a>
+    <span class="text-[13px] text-[#6c757d] mx-0.5">/</span>
+    <span class="text-[13px] text-[#212529]">{{ utlysning.utlysningNamn }}</span>
+  </div>
+
+  <!-- Page content -->
+  <div class="flex-1 px-6 pb-10">
+
+    <!-- Page header -->
+    <div class="bg-white border border-[#dee2e6] border-b-0 px-6 pt-5 pb-0">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-[13px] text-[#6c757d] leading-none mb-1">Detaljer för</p>
+          <h1 class="text-[28px] font-semibold text-[#212529] leading-tight">Utlysning</h1>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <button
+            (click)="tillbakatillLista()"
+            class="px-5 py-1.5 text-[14px] border border-[#623fa4] text-[#623fa4] hover:bg-[#eeeaf6] transition-colors">
+            Tillbaka till lista
+          </button>
+          <button class="px-5 py-1.5 text-[14px] border border-[#623fa4] text-[#623fa4] hover:bg-[#eeeaf6] transition-colors">
+            Kopiera direktlänk
+          </button>
+          <button (click)="taBort()" class="flex items-center gap-2 px-4 py-1.5 text-[14px] bg-[#B01729] text-white hover:bg-[#8e1221] transition-colors">
+            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            Ta bort
+          </button>
+          <button
+            (click)="spara()"
+            [disabled]="!isDirty"
+            class="px-5 py-1.5 text-[14px] transition-colors"
+            [class.bg-[#623fa4]]="isDirty"
+            [class.text-white]="isDirty"
+            [class.hover:bg-[#4e3283]]="isDirty"
+            [class.bg-[#E9ECEF]]="!isDirty"
+            [class.text-[#ADB5BD]]="!isDirty"
+            [class.cursor-not-allowed]="!isDirty">
+            Spara
+          </button>
+        </div>
+      </div>
+      <div class="mt-4 h-px bg-[#dee2e6]"></div>
+    </div>
+
+    <!-- Body -->
+    <div class="bg-white border border-[#dee2e6] border-t-0 px-6 py-6">
+      <div class="max-w-[559px] space-y-5">
+
+        <!-- Error summary banner -->
+        @if (showErrorSummary) {
+          <div class="flex flex-row gap-4 p-4 bg-[#f9dcdf] border border-[#b01729]">
+            <span class="material-symbols-outlined shrink-0 text-[24px] leading-none text-[#59050f]">error</span>
+            <div class="flex-1 flex flex-col gap-2">
+              <p class="text-[16px] font-semibold text-[#59050f] leading-6">Korrigera följande fel</p>
+              <ul class="list-disc list-inside flex flex-col gap-1">
+                @for (error of errors; track error.field) {
+                  <li class="text-[16px] text-[#59050f] leading-6">
+                    <button (click)="scrollToField(error.field)" class="hover:underline text-left text-[16px] text-[#59050f]">
+                      {{ error.label }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+            <button (click)="dismissErrors()" class="shrink-0 text-[#6c757d] hover:text-[#495057] transition-colors self-start">
+              <svg class="w-[13px] h-[13px]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
+        }
+
+        <!-- Ansvarig organisation + Status -->
+        <div class="flex gap-16">
+          <div>
+            <p class="text-[14px] font-semibold text-[#212529] mb-1">Ansvarig organisation</p>
+            <p class="text-[14px] text-[#212529]">Tillväxtverket</p>
+          </div>
+          <div>
+            <p class="text-[14px] font-semibold text-[#212529] mb-1">Status</p>
+            <p class="text-[14px] text-[#212529]">Aktiv</p>
+          </div>
+        </div>
+
+        <!-- Utlysning -->
+        <div id="field-utlysningNamn">
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">Utlysning</label>
+          <input
+            type="text"
+            [(ngModel)]="utlysning.utlysningNamn"
+            (ngModelChange)="markDirty()"
+            class="w-full px-3 py-2 text-[14px] border bg-white text-[#212529] focus:outline-none focus:ring-[3px] transition-colors"
+            [class.border-[#dee2e6]]="!hasError('utlysningNamn')"
+            [class.focus:border-[#623fa4]]="!hasError('utlysningNamn')"
+            [class.focus:ring-[#623fa4]/20]="!hasError('utlysningNamn')"
+            [class.border-[#b01729]]="hasError('utlysningNamn')"
+            [class.focus:border-[#b01729]]="hasError('utlysningNamn')"
+            [class.focus:ring-[#b01729]/20]="hasError('utlysningNamn')" />
+          @if (hasError('utlysningNamn')) {
+            <p class="mt-1 flex items-center gap-1 text-[13px] text-[#b01729]">
+              <span class="material-symbols-outlined shrink-0 text-[18px] leading-none">error</span>
+              Utlysningens namn saknas
+            </p>
+          }
+        </div>
+
+        <!-- Diarienummer -->
+        <div>
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">
+            Diarienummer för utlysning
+            <span class="font-normal text-[#6c757d]">(Valfritt)</span>
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="utlysning.diarienummer"
+            (ngModelChange)="markDirty()"
+            class="w-full px-3 py-2 text-[14px] border border-[#dee2e6] bg-white text-[#212529] focus:outline-none focus:border-[#623fa4] focus:ring-[3px] focus:ring-[#623fa4]/20 transition-colors" />
+        </div>
+
+        <!-- System för diarieföring -->
+        <div>
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">
+            System för diarieföring
+            <span class="font-normal text-[#6c757d]">(Valfritt)</span>
+          </label>
+          <div class="relative">
+            <select
+              [(ngModel)]="utlysning.diarieSystem"
+              (ngModelChange)="markDirty()"
+              class="w-full appearance-none px-3 py-2 text-[14px] border border-[#dee2e6] bg-white focus:outline-none focus:border-[#623fa4] focus:ring-[3px] focus:ring-[#623fa4]/20 transition-colors pr-9"
+              [class.text-[#6c757d]]="!utlysning.diarieSystem"
+              [class.text-[#212529]]="utlysning.diarieSystem">
+              <option value="" disabled>Välj</option>
+              <option value="public360">Public 360</option>
+              <option value="diabas">Diabas</option>
+              <option value="other">Annat</option>
+            </select>
+            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+
+        <!-- Internt namn -->
+        <div>
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">
+            Internt namn
+            <span class="font-normal text-[#6c757d]">(Valfritt)</span>
+          </label>
+          <div class="relative">
+            <select
+              [(ngModel)]="utlysning.interntNamn"
+              (ngModelChange)="markDirty()"
+              class="w-full appearance-none px-3 py-2 text-[14px] border border-[#dee2e6] bg-white focus:outline-none focus:border-[#623fa4] focus:ring-[3px] focus:ring-[#623fa4]/20 transition-colors pr-9"
+              [class.text-[#6c757d]]="!utlysning.interntNamn"
+              [class.text-[#212529]]="utlysning.interntNamn">
+              <option value="" disabled>Välj</option>
+              <option value="a">Alternativ A</option>
+              <option value="b">Alternativ B</option>
+            </select>
+            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+
+        <!-- Stödform (read-only) -->
+        <div>
+          <p class="text-[14px] font-semibold text-[#212529] mb-1">Stödform</p>
+          <p class="text-[14px] text-[#212529] leading-snug">{{ utlysning.stoedformPath }}</p>
+        </div>
+
+        <!-- Startstödformsnod -->
+        <div id="field-startstoedformsnod">
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">Startstödformsnod</label>
+          <div class="relative">
+            <select
+              [(ngModel)]="utlysning.startstoedformsnod"
+              (ngModelChange)="markDirty()"
+              class="w-full appearance-none px-3 py-2 text-[14px] border bg-white focus:outline-none focus:ring-[3px] transition-colors pr-9"
+              [class.border-[#dee2e6]]="!hasError('startstoedformsnod')"
+              [class.focus:border-[#623fa4]]="!hasError('startstoedformsnod')"
+              [class.focus:ring-[#623fa4]/20]="!hasError('startstoedformsnod')"
+              [class.border-[#b01729]]="hasError('startstoedformsnod')"
+              [class.focus:border-[#b01729]]="hasError('startstoedformsnod')"
+              [class.focus:ring-[#b01729]/20]="hasError('startstoedformsnod')"
+              [class.text-[#6c757d]]="!utlysning.startstoedformsnod"
+              [class.text-[#212529]]="utlysning.startstoedformsnod">
+              <option value="" disabled>Välj</option>
+              <option value="1">Stödform 1</option>
+              <option value="2">Stödform 2</option>
+            </select>
+            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+          @if (hasError('startstoedformsnod')) {
+            <p class="mt-1 flex items-center gap-1 text-[13px] text-[#b01729]">
+              <span class="material-symbols-outlined shrink-0 text-[18px] leading-none">error</span>
+              Startstödformsnod har ej valts
+            </p>
+          }
+        </div>
+
+        <!-- Språk -->
+        <div id="field-sprak">
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">Språk</label>
+          <div class="relative">
+            <select
+              [(ngModel)]="utlysning.sprak"
+              (ngModelChange)="markDirty()"
+              class="w-full appearance-none px-3 py-2 text-[14px] border bg-white focus:outline-none focus:ring-[3px] transition-colors pr-9"
+              [class.border-[#dee2e6]]="!hasError('sprak')"
+              [class.focus:border-[#623fa4]]="!hasError('sprak')"
+              [class.focus:ring-[#623fa4]/20]="!hasError('sprak')"
+              [class.border-[#b01729]]="hasError('sprak')"
+              [class.focus:border-[#b01729]]="hasError('sprak')"
+              [class.focus:ring-[#b01729]/20]="hasError('sprak')"
+              [class.text-[#6c757d]]="!utlysning.sprak"
+              [class.text-[#212529]]="utlysning.sprak">
+              <option value="" disabled>Välj</option>
+              <option value="sv">Svenska</option>
+              <option value="en">Engelska</option>
+            </select>
+            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+          @if (hasError('sprak')) {
+            <p class="mt-1 flex items-center gap-1 text-[13px] text-[#b01729]">
+              <span class="material-symbols-outlined shrink-0 text-[18px] leading-none">error</span>
+              Språk har ej valts
+            </p>
+          }
+        </div>
+
+        <!-- Period -->
+        <div class="flex gap-4">
+          <div class="flex-1" id="field-periodFran">
+            <label class="block text-[14px] font-semibold text-[#212529] mb-1">Period från</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="utlysning.periodFran"
+              (ngModelChange)="markDirty()"
+              class="w-full px-3 py-2 text-[14px] border bg-white text-[#212529] focus:outline-none focus:ring-[3px] transition-colors"
+              [class.border-[#dee2e6]]="!hasError('periodFran')"
+              [class.focus:border-[#623fa4]]="!hasError('periodFran')"
+              [class.focus:ring-[#623fa4]/20]="!hasError('periodFran')"
+              [class.border-[#b01729]]="hasError('periodFran')"
+              [class.focus:border-[#b01729]]="hasError('periodFran')"
+              [class.focus:ring-[#b01729]/20]="hasError('periodFran')" />
+            @if (hasError('periodFran')) {
+              <p class="mt-1 flex items-center gap-1 text-[13px] text-[#b01729]">
+                <span class="material-symbols-outlined shrink-0 text-[18px] leading-none">error</span>
+                Period från saknas
+              </p>
+            }
+          </div>
+          <div class="flex-1" id="field-periodTill">
+            <label class="block text-[14px] font-semibold text-[#212529] mb-1">Period till</label>
+            <input
+              type="datetime-local"
+              [(ngModel)]="utlysning.periodTill"
+              (ngModelChange)="markDirty()"
+              class="w-full px-3 py-2 text-[14px] border bg-white text-[#212529] focus:outline-none focus:ring-[3px] transition-colors"
+              [class.border-[#dee2e6]]="!hasError('periodTill')"
+              [class.focus:border-[#623fa4]]="!hasError('periodTill')"
+              [class.focus:ring-[#623fa4]/20]="!hasError('periodTill')"
+              [class.border-[#b01729]]="hasError('periodTill')"
+              [class.focus:border-[#b01729]]="hasError('periodTill')"
+              [class.focus:ring-[#b01729]/20]="hasError('periodTill')" />
+            @if (hasError('periodTill')) {
+              <p class="mt-1 flex items-center gap-1 text-[13px] text-[#b01729]">
+                <span class="material-symbols-outlined shrink-0 text-[18px] leading-none">error</span>
+                Period till saknas
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- Finansieringsmedel -->
+        <div id="field-finansieringsmedel" class="border"
+          [class.border-[#dee2e6]]="!hasError('finansieringsmedel')"
+          [class.border-[#b01729]]="hasError('finansieringsmedel')">
+          <div class="px-4 py-3">
+            <p class="text-[16px] font-semibold text-[#212529]">Finansieringsmedel</p>
+          </div>
+          <div class="border-t border-[#dee2e6] px-4 py-3">
+            @if (utlysning.finansieringsmedel.length === 0) {
+              @if (hasError('finansieringsmedel')) {
+                <p class="flex items-center gap-1.5 text-[14px] text-[#b01729]">
+                  <span class="material-symbols-outlined shrink-0 text-[18px] leading-none">error</span>
+                  Det krävs minst ett finansieringsmedel
+                </p>
+              }
+            } @else {
+              <ul class="space-y-1">
+                @for (f of utlysning.finansieringsmedel; track f) {
+                  <li class="text-[14px] text-[#212529]">{{ f }}</li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+
+        <!-- Ingress -->
+        <div>
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">
+            Ingress <span class="font-normal text-[#6c757d]">(Valfritt)</span>
+          </label>
+          <textarea
+            [(ngModel)]="utlysning.ingress"
+            (ngModelChange)="markDirty()"
+            rows="5"
+            class="w-full px-3 py-2 text-[14px] border border-[#dee2e6] bg-white text-[#212529] resize-y focus:outline-none focus:border-[#623fa4] focus:ring-[3px] focus:ring-[#623fa4]/20 transition-colors"></textarea>
+        </div>
+
+        <!-- Beskrivning -->
+        <div>
+          <label class="block text-[14px] font-semibold text-[#212529] mb-1">
+            Beskrivning <span class="font-normal text-[#6c757d]">(Valfritt)</span>
+          </label>
+          <textarea
+            [(ngModel)]="utlysning.beskrivning"
+            (ngModelChange)="markDirty()"
+            rows="5"
+            class="w-full px-3 py-2 text-[14px] border border-[#dee2e6] bg-white text-[#212529] resize-y focus:outline-none focus:border-[#623fa4] focus:ring-[3px] focus:ring-[#623fa4]/20 transition-colors"></textarea>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+@if (showTaBortBekraftaModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="flex flex-col bg-white" style="width:512px;box-shadow:0px 8px 16px -4px rgba(22,22,22,0.08),0px 24px 48px -12px rgba(34,36,42,0.16)">
+      <div class="flex items-center justify-between border-b border-[#ced4da]" style="padding:16px 8px 16px 16px">
+        <h2 class="text-[24px] font-semibold text-[#212529] leading-[36px]">Ta bort</h2>
+        <button (click)="stangTaBortBekraftaModal()" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f1f1f4] transition-colors">
+          <svg class="w-[13px] h-[13px] text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <p class="text-[16px] text-[#212529] leading-6">Är du säker på att du vill ta bort utlysningen?</p>
+      </div>
+      <div class="flex items-center justify-between p-4 border-t border-[#ced4da]">
+        <div class="w-10"></div>
+        <div class="flex items-center gap-4">
+          <button (click)="stangTaBortBekraftaModal()" class="px-4 py-2 text-[16px] text-[#623fa4] border border-[#623fa4] hover:bg-[#eeeaf6] transition-colors">Avbryt</button>
+          <button (click)="bekraftaTaBort()" class="px-4 py-2 text-[16px] text-white bg-[#B01729] hover:bg-[#8e1221] transition-colors">Ta bort</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showTaBortModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="flex flex-col bg-white" style="width:512px;box-shadow:0px 8px 16px -4px rgba(22,22,22,0.08),0px 24px 48px -12px rgba(34,36,42,0.16)">
+      <div class="flex items-center justify-between border-b border-[#ced4da]" style="padding:16px 8px 16px 16px">
+        <h2 class="text-[24px] font-semibold text-[#212529] leading-[36px]">Ta bort</h2>
+        <button (click)="stangTaBortModal()" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f1f1f4] transition-colors">
+          <svg class="w-[13px] h-[13px] text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <p class="text-[16px] text-[#212529] leading-6">Det går inte att ta bort en aktiv utlysning.</p>
+      </div>
+      <div class="flex items-center justify-between p-4 border-t border-[#ced4da]">
+        <div class="w-10"></div>
+        <div class="flex items-center gap-4">
+          <button (click)="stangTaBortModal()" class="px-4 py-2 text-[16px] text-[#623fa4] border border-[#623fa4] hover:bg-[#eeeaf6] transition-colors">Stäng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showUnsavedModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="flex flex-col bg-white" style="width:512px;box-shadow:0px 8px 16px -4px rgba(22,22,22,0.08),0px 24px 48px -12px rgba(34,36,42,0.16)">
+      <div class="flex items-center justify-between border-b border-[#ced4da]" style="padding:16px 8px 16px 16px">
+        <h2 class="text-[24px] font-semibold text-[#212529] leading-[36px]">Osparade ändringar</h2>
+        <button (click)="stangUnsavedModal()" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f1f1f4] transition-colors">
+          <svg class="w-[13px] h-[13px] text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <p class="text-[16px] text-[#212529] leading-6">Det finns osparade ändringar i ärendet. Vill du kasta dessa ändringar?</p>
+      </div>
+      <div class="flex items-center justify-between p-4 border-t border-[#ced4da]">
+        <div class="w-10"></div>
+        <div class="flex items-center gap-4">
+          <button (click)="stangUnsavedModal()" class="px-4 py-2 text-[16px] text-[#623fa4] border border-[#623fa4] hover:bg-[#eeeaf6] transition-colors">Avbryt</button>
+          <button (click)="bekraftaNavigering()" class="px-4 py-2 text-[16px] text-white bg-[#623fa4] hover:bg-[#4e3283] transition-colors">Kasta ändringar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="flex flex-col bg-white" style="width:512px;box-shadow:0px 8px 16px -4px rgba(22,22,22,0.08),0px 24px 48px -12px rgba(34,36,42,0.16)">
+      <div class="flex items-center justify-between border-b border-[#ced4da]" style="padding:16px 8px 16px 16px">
+        <h2 class="text-[24px] font-semibold text-[#212529] leading-[36px]">Spara</h2>
+        <button (click)="stangModal()" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#f1f1f4] transition-colors">
+          <svg class="w-[13px] h-[13px] text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="p-4">
+        <p class="text-[16px] text-[#212529] leading-6">Är du säker på att du vill spara utlysningen?</p>
+      </div>
+      <div class="flex items-center justify-between p-4 border-t border-[#ced4da]">
+        <div class="w-10"></div>
+        <div class="flex items-center gap-4">
+          <button (click)="stangModal()" class="px-4 py-2 text-[16px] text-[#623fa4] border border-[#623fa4] hover:bg-[#eeeaf6] transition-colors">Avbryt</button>
+          <button (click)="bekraftaSpara()" class="px-4 py-2 text-[16px] text-white bg-[#623fa4] hover:bg-[#4e3283] transition-colors">Spara</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showToast) {
+  <div class="fixed top-6 right-6 z-50" style="width:344px">
+    <div
+      class="flex flex-row gap-2 p-4 rounded-[4px] border border-[#33844E] bg-[#E4F2E8]"
+      style="box-shadow:0px 4px 6px -2px rgba(22,22,22,0.04),0px 12px 12px -4px rgba(34,36,42,0.12)">
+      <div class="flex flex-col gap-2 flex-1">
+        <div class="flex items-center gap-2">
+          <svg class="w-6 h-6 shrink-0 text-[#143920]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5l-4-4 1.41-1.41L10 13.67l6.59-6.59L18 8.5l-8 8z"/>
+          </svg>
+          <span class="text-[14px] font-semibold text-[#143920] leading-6">Utlysningen är sparad</span>
+        </div>
+      </div>
+      <button (click)="stangToast()" class="w-6 h-6 shrink-0 flex items-center justify-center rounded-full hover:bg-[#c3e6cb] transition-colors self-start">
+        <svg class="w-[13px] h-[13px] text-[#6c757d]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+  </div>
+}
