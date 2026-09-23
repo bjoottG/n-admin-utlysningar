@@ -84,7 +84,7 @@ export class LasComponent {
     } catch {
       // sessionStorage kan vara blockerad – släpp igenom ändå under sidvisningen
     }
-    const mal = this.route.snapshot.queryParamMap.get('mal') || '/utlysningar';
+    const mal = this.route.snapshot.queryParamMap.get('mal') || '/';
     this.router.navigateByUrl(mal);
   }
 }
