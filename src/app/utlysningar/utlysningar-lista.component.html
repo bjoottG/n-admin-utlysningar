@@ -1,0 +1,515 @@
+<div class="min-h-screen flex flex-col bg-surface-subtle font-sans">
+
+  <app-toppmeny />
+
+  <!-- Brödsmulor -->
+  <nav class="flex items-center gap-1 px-6 py-2.5" aria-label="Brödsmulor">
+    <a class="text-[15px] text-interactive hover:underline cursor-pointer">Startsida</a>
+    <span class="text-[15px] text-text-muted mx-0.5">/</span>
+    <span class="text-[15px] text-text">Utlysningar</span>
+  </nav>
+
+  <!-- Sidinnehåll -->
+  <div class="flex-1 px-6 pb-10">
+
+    <!-- Sidhuvud -->
+    <div class="flex items-end justify-between gap-4 flex-wrap mb-4">
+      <div>
+        <h1 class="text-2xl font-semibold text-text leading-tight">Utlysningar</h1>
+        <p class="text-sm text-text-secondary mt-2 max-w-[70ch]">
+          Nedan listas samtliga utlysningar för alla organisationer, sorterade med senast
+          skapad först. Använd sök och filter i tabellen för att avgränsa listan.
+        </p>
+      </div>
+      <button
+        type="button"
+        routerLink="/utlysningar/ny"
+        class="flex items-center gap-1.5 px-4 py-2 text-sm bg-primary text-on-primary hover:bg-primary-hover transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Skapa ny utlysning
+      </button>
+    </div>
+
+    <!-- Tabellkort -->
+    <div class="bg-surface border border-border">
+
+      <!-- Verktygsrad -->
+      <div class="flex items-center justify-between gap-4 px-6 py-4">
+        <h2 class="text-xl font-semibold text-text">Alla utlysningar</h2>
+
+        <div class="flex items-center gap-1">
+          <div class="relative mr-1">
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[20px] text-text-muted pointer-events-none">search</span>
+            <input
+              id="fritext-sok"
+              type="text"
+              placeholder="Sök på utlysning"
+              autocomplete="off"
+              [ngModel]="fritextSok()"
+              (ngModelChange)="sattFritext($event)"
+              class="w-80 pl-9 pr-8 py-1.5 text-sm text-text border border-border bg-surface placeholder:text-text-subtle outline-none focus:border-border-focus focus:shadow-focus" />
+            @if (fritextSok()) {
+              <button
+                type="button"
+                (click)="sattFritext('')"
+                aria-label="Rensa sökningen"
+                class="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-text-muted hover:text-text hover:bg-component-hover">
+                <span class="material-symbols-outlined text-[16px] align-middle">close</span>
+              </button>
+            }
+          </div>
+
+          <!-- Filter -->
+          <div id="filter-omrade" class="relative">
+            <button
+              type="button"
+              (click)="filterPanelOppen.set(!filterPanelOppen())"
+              aria-label="Filtrera listan"
+              [attr.aria-expanded]="filterPanelOppen()"
+              class="relative p-2 rounded-full text-interactive hover:bg-component-hover"
+              [class.bg-component-selected]="filterPanelOppen()">
+              <span class="material-symbols-outlined text-[22px] align-middle">filter_list</span>
+              @if (antalAktivaFilter() > 0) {
+                <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 rounded-full bg-primary text-on-primary text-[11px] font-semibold">{{ antalAktivaFilter() }}</span>
+              }
+            </button>
+
+            <!-- Filterpanel -->
+            @if (filterPanelOppen()) {
+              <div class="absolute right-0 top-full mt-1 w-[400px] max-w-[calc(100vw-3rem)] bg-surface border border-border shadow-xl z-[1000]" role="dialog" aria-label="Filter">
+                <div class="flex items-center gap-4 px-5 pt-4 pb-3">
+                  <h3 class="text-base font-semibold text-text">Filter</h3>
+                  <button
+                    type="button"
+                    (click)="aterstallFilter()"
+                    [disabled]="antalAktivaFilter() === 0"
+                    class="text-sm text-interactive underline hover:text-interactive-hover disabled:no-underline disabled:bg-transparent">
+                    Rensa alla filter
+                  </button>
+                  <button
+                    type="button"
+                    (click)="filterPanelOppen.set(false)"
+                    aria-label="Stäng filterpanelen"
+                    class="ml-auto p-1 rounded-full text-text-muted hover:text-text hover:bg-component-hover">
+                    <span class="material-symbols-outlined text-[20px] align-middle">close</span>
+                  </button>
+                </div>
+
+                <div class="max-h-[60vh] overflow-y-auto px-5 pb-4">
+
+                  <!-- Sektion: Organisation -->
+                  <div class="border-t border-border-muted">
+                    <button
+                      type="button"
+                      (click)="toggleSektion('organisation')"
+                      [attr.aria-expanded]="arSektionOppen('organisation')"
+                      class="flex items-center justify-between w-full py-3 text-sm font-medium text-text hover:text-primary">
+                      Organisation
+                      <span class="material-symbols-outlined text-[20px] text-text-muted">{{ arSektionOppen('organisation') ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                    </button>
+                    @if (arSektionOppen('organisation')) {
+                      <div class="pb-4">
+                        <input
+                          type="text"
+                          placeholder="Sök organisation ..."
+                          autocomplete="off"
+                          aria-label="Sök organisation"
+                          [ngModel]="organisationSok()"
+                          (ngModelChange)="organisationSok.set($event)"
+                          class="w-full px-2.5 py-1.5 mb-2 text-sm text-text border border-border bg-surface placeholder:text-text-subtle outline-none focus:border-border-focus" />
+                        <ul class="max-h-52 overflow-y-auto">
+                          @for (organisation of filtreradeOrganisationer(); track organisation) {
+                            <li>
+                              <label class="flex items-center gap-3 py-1.5 text-sm text-text cursor-pointer hover:bg-component-hover px-1">
+                                <input
+                                  type="checkbox"
+                                  [checked]="arOrganisationVald(organisation)"
+                                  (change)="toggleOrganisation(organisation)"
+                                  class="w-4 h-4 accent-primary shrink-0" />
+                                {{ organisation }}
+                                <span class="ml-auto inline-flex items-center justify-center min-w-7 h-6 px-2 rounded-full bg-primary text-on-primary text-xs font-semibold">{{ antalForOrganisation(organisation) }}</span>
+                              </label>
+                            </li>
+                          } @empty {
+                            <li class="py-1.5 text-sm text-text-muted">Ingen organisation matchar ”{{ organisationSok() }}”</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Sektion: Stödform -->
+                  <div class="border-t border-border-muted">
+                    <button
+                      type="button"
+                      (click)="toggleSektion('stodform')"
+                      [attr.aria-expanded]="arSektionOppen('stodform')"
+                      class="flex items-center justify-between w-full py-3 text-sm font-medium text-text hover:text-primary">
+                      Stödform
+                      <span class="material-symbols-outlined text-[20px] text-text-muted">{{ arSektionOppen('stodform') ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                    </button>
+                    @if (arSektionOppen('stodform')) {
+                      <div class="pb-4">
+                        <p class="text-[13px] text-text-muted mb-2">Välj nivå för nivå i stödträdet. Klicka på en vald nivå för att gå tillbaka dit.</p>
+                        <ul class="border border-border">
+                          @for (niva of valdStodformVag(); track $index) {
+                            <li>
+                              <button
+                                type="button"
+                                (click)="taBortStodformNiva($index)"
+                                [attr.aria-label]="'Ta bort nivån ' + niva + ' och alla nivåer under'"
+                                class="flex items-start justify-between gap-3 w-full px-3 py-2 text-sm text-left bg-primary text-on-primary hover:bg-primary-hover">
+                                {{ niva }}
+                                <span class="material-symbols-outlined text-[18px] shrink-0">check</span>
+                              </button>
+                            </li>
+                          }
+                          @for (niva of valbaraStodformNivaer(); track niva) {
+                            <li class="border-t border-border-muted first:border-t-0">
+                              <button
+                                type="button"
+                                (click)="valStodformNiva(niva)"
+                                class="flex items-start justify-between gap-3 w-full px-3 py-2 text-sm text-left text-interactive hover:bg-component-hover">
+                                {{ niva }}
+                                <span class="material-symbols-outlined text-[18px] shrink-0">add</span>
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Sektion: Status -->
+                  <div class="border-t border-border-muted">
+                    <button
+                      type="button"
+                      (click)="toggleSektion('status')"
+                      [attr.aria-expanded]="arSektionOppen('status')"
+                      class="flex items-center justify-between w-full py-3 text-sm font-medium text-text hover:text-primary">
+                      Status
+                      <span class="material-symbols-outlined text-[20px] text-text-muted">{{ arSektionOppen('status') ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                    </button>
+                    @if (arSektionOppen('status')) {
+                      <div class="pb-4">
+                        <ul>
+                          @for (info of statusInfo; track info.status) {
+                            <li>
+                              <label class="flex items-center gap-3 py-1.5 text-sm text-text cursor-pointer hover:bg-component-hover px-1" [title]="info.beskrivning">
+                                <input
+                                  type="checkbox"
+                                  [checked]="arStatusVald(info.status)"
+                                  (change)="toggleStatus(info.status)"
+                                  class="w-4 h-4 accent-primary shrink-0" />
+                                {{ info.status }}
+                                <span class="ml-auto inline-flex items-center justify-center min-w-7 h-6 px-2 rounded-full bg-primary text-on-primary text-xs font-semibold">{{ antalForStatus(info.status) }}</span>
+                              </label>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Sektion: Etikett -->
+                  <div class="border-t border-border-muted">
+                    <button
+                      type="button"
+                      (click)="toggleSektion('etikett')"
+                      [attr.aria-expanded]="arSektionOppen('etikett')"
+                      class="flex items-center justify-between w-full py-3 text-sm font-medium text-text hover:text-primary">
+                      Etikett
+                      <span class="material-symbols-outlined text-[20px] text-text-muted">{{ arSektionOppen('etikett') ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                    </button>
+                    @if (arSektionOppen('etikett')) {
+                      <div class="pb-4">
+                        <ul>
+                          @for (info of etikettInfo; track info.etikett) {
+                            <li>
+                              <label class="flex items-center gap-3 py-1.5 text-sm text-text cursor-pointer hover:bg-component-hover px-1" [title]="info.beskrivning">
+                                <input
+                                  type="checkbox"
+                                  [checked]="arEtikettVald(info.etikett)"
+                                  (change)="toggleEtikett(info.etikett)"
+                                  class="w-4 h-4 accent-primary shrink-0" />
+                                {{ info.etikett }}
+                                <span class="ml-auto inline-flex items-center justify-center min-w-7 h-6 px-2 rounded-full bg-primary text-on-primary text-xs font-semibold">{{ antalForEtikett(info.etikett) }}</span>
+                              </label>
+                            </li>
+                          }
+                        </ul>
+                        <button
+                          type="button"
+                          (click)="statusInfoOppen.set(!statusInfoOppen())"
+                          [attr.aria-expanded]="statusInfoOppen()"
+                          class="flex items-center gap-2 mt-2 px-2.5 py-1.5 text-sm font-semibold text-primary hover:bg-component-hover transition-colors">
+                          <span class="material-symbols-outlined text-[20px]">info</span>
+                          Vad betyder statusar och etiketter?
+                          <span class="material-symbols-outlined text-[20px]">{{ statusInfoOppen() ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                        </button>
+                        @if (statusInfoOppen()) {
+                          <dl class="mt-2 px-2.5 space-y-1.5" role="note">
+                            @for (info of statusInfo; track info.status) {
+                              <div class="grid grid-cols-[104px_minmax(0,1fr)] gap-2 items-baseline">
+                                <dt>
+                                  <span class="inline-block px-1.5 py-0.5 text-[11px] font-medium rounded-sm" [class]="statusKlass(info.status)">{{ info.status }}</span>
+                                </dt>
+                                <dd class="text-[13px] text-text-secondary">{{ info.beskrivning }}</dd>
+                              </div>
+                            }
+                            @for (info of etikettInfo; track info.etikett) {
+                              <div class="grid grid-cols-[104px_minmax(0,1fr)] gap-2 items-baseline">
+                                <dt>
+                                  <span class="inline-block px-1.5 py-0.5 text-[11px] font-medium rounded-sm" [class]="etikettKlass(info.etikett)">{{ info.etikett }}</span>
+                                </dt>
+                                <dd class="text-[13px] text-text-secondary">{{ info.beskrivning }}</dd>
+                              </div>
+                            }
+                          </dl>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Sektion: Datum skapad -->
+                  <div class="border-t border-border-muted">
+                    <button
+                      type="button"
+                      (click)="toggleSektion('skapad')"
+                      [attr.aria-expanded]="arSektionOppen('skapad')"
+                      class="flex items-center justify-between w-full py-3 text-sm font-medium text-text hover:text-primary">
+                      Datum skapad
+                      <span class="material-symbols-outlined text-[20px] text-text-muted">{{ arSektionOppen('skapad') ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                    </button>
+                    @if (arSektionOppen('skapad')) {
+                      <div class="grid grid-cols-2 gap-3 pb-4">
+                        <div class="text-[13px] text-text-secondary">
+                          <span class="block mb-1">Från</span>
+                          <app-datum-valjare [varde]="skapadFran()" (vardeChange)="sattDatum('skapadFran', $event)" etikett="Skapad från och med" />
+                        </div>
+                        <div class="text-[13px] text-text-secondary">
+                          <span class="block mb-1">Till</span>
+                          <app-datum-valjare [varde]="skapadTill()" (vardeChange)="sattDatum('skapadTill', $event)" etikett="Skapad till och med" />
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Sektion: Går ut -->
+                  <div class="border-t border-border-muted">
+                    <button
+                      type="button"
+                      (click)="toggleSektion('slutdatum')"
+                      [attr.aria-expanded]="arSektionOppen('slutdatum')"
+                      class="flex items-center justify-between w-full py-3 text-sm font-medium text-text hover:text-primary">
+                      Utlysningen går ut
+                      <span class="material-symbols-outlined text-[20px] text-text-muted">{{ arSektionOppen('slutdatum') ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                    </button>
+                    @if (arSektionOppen('slutdatum')) {
+                      <div class="grid grid-cols-2 gap-3 pb-4">
+                        <div class="text-[13px] text-text-secondary">
+                          <span class="block mb-1">Från</span>
+                          <app-datum-valjare [varde]="slutFran()" (vardeChange)="sattDatum('slutFran', $event)" etikett="Går ut från och med" />
+                        </div>
+                        <div class="text-[13px] text-text-secondary">
+                          <span class="block mb-1">Till</span>
+                          <app-datum-valjare [varde]="slutTill()" (vardeChange)="sattDatum('slutTill', $event)" etikett="Går ut till och med" />
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Aktiva filter -->
+      @if (aktivaFilter().length > 0) {
+        <div class="flex items-center flex-wrap gap-2 px-6 pb-3">
+          @for (filter of aktivaFilter(); track filter.typ + filter.varde) {
+            <span class="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 text-[13px] bg-surface-primary text-on-surface-primary rounded-full">
+              {{ filter.etikett }}
+              <button
+                type="button"
+                (click)="taBortFilter(filter)"
+                [attr.aria-label]="'Ta bort filter ' + filter.etikett"
+                class="flex items-center p-0.5 rounded-full hover:bg-primary-20">
+                <span class="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            </span>
+          }
+          <button
+            type="button"
+            (click)="aterstallFilter()"
+            class="ml-1 text-[13px] text-interactive underline hover:text-interactive-hover">
+            Rensa alla filter
+          </button>
+        </div>
+      }
+
+      <!-- Tabell -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border text-left">
+              <th scope="col" class="pl-6 pr-4 py-3 font-semibold text-text whitespace-nowrap">
+                <button type="button" (click)="sortera('skapad')" class="flex items-center gap-1 hover:text-primary" [attr.aria-label]="'Sortera på skapad ' + (sortKolumn() === 'skapad' && sortRiktning() === 'desc' ? 'stigande' : 'fallande')">
+                  Skapad
+                  <span class="material-symbols-outlined text-[18px]" [class.text-primary]="sortKolumn() === 'skapad'" [class.text-text-subtle]="sortKolumn() !== 'skapad'">
+                    {{ sortKolumn() !== 'skapad' ? 'swap_vert' : (sortRiktning() === 'desc' ? 'arrow_downward' : 'arrow_upward') }}
+                  </span>
+                </button>
+              </th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text">Utlysning</th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text">Organisation</th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text">Stödform</th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text">Status</th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text">Etiketter</th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text whitespace-nowrap">
+                <button type="button" (click)="sortera('startdatum')" class="flex items-center gap-1 hover:text-primary" [attr.aria-label]="'Sortera på öppnar ' + (sortKolumn() === 'startdatum' && sortRiktning() === 'desc' ? 'stigande' : 'fallande')">
+                  Öppnar
+                  <span class="material-symbols-outlined text-[18px]" [class.text-primary]="sortKolumn() === 'startdatum'" [class.text-text-subtle]="sortKolumn() !== 'startdatum'">
+                    {{ sortKolumn() !== 'startdatum' ? 'swap_vert' : (sortRiktning() === 'desc' ? 'arrow_downward' : 'arrow_upward') }}
+                  </span>
+                </button>
+              </th>
+              <th scope="col" class="px-4 py-3 font-semibold text-text whitespace-nowrap">
+                <button type="button" (click)="sortera('slutdatum')" class="flex items-center gap-1 hover:text-primary" [attr.aria-label]="'Sortera på stängs ' + (sortKolumn() === 'slutdatum' && sortRiktning() === 'desc' ? 'stigande' : 'fallande')">
+                  Stängs
+                  <span class="material-symbols-outlined text-[18px]" [class.text-primary]="sortKolumn() === 'slutdatum'" [class.text-text-subtle]="sortKolumn() !== 'slutdatum'">
+                    {{ sortKolumn() !== 'slutdatum' ? 'swap_vert' : (sortRiktning() === 'desc' ? 'arrow_downward' : 'arrow_upward') }}
+                  </span>
+                </button>
+              </th>
+              <th scope="col" class="px-4 py-3"><span class="sr-only">Åtgärder</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (utlysning of sidansUtlysningar(); track utlysning.id) {
+              <tr class="border-b border-border-muted odd:bg-surface-subtle">
+                <td class="pl-6 pr-4 py-3 text-text whitespace-nowrap">{{ utlysning.skapad }}</td>
+                <td class="px-4 py-3">
+                  <a [routerLink]="['/utlysningar', utlysning.id]" class="font-semibold text-interactive hover:underline">{{ utlysning.namn }}</a>
+                </td>
+                <td class="px-4 py-3 text-text whitespace-nowrap">{{ utlysning.organisation }}</td>
+                <td class="px-4 py-3 text-text max-w-[420px]" [title]="utlysning.stodform">
+                  {{ formateraStodform(utlysning.stodform) }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-block px-2 py-0.5 text-xs font-medium rounded-sm cursor-help whitespace-nowrap"
+                    [class]="statusKlass(statusFor(utlysning))"
+                    [title]="statusBeskrivning(statusFor(utlysning))">{{ statusFor(utlysning) }}</span>
+                </td>
+                <td class="px-4 py-3">
+                  @if (etikettFor(utlysning); as e) {
+                    <span
+                      class="inline-block px-2 py-0.5 text-xs font-medium rounded-sm cursor-help whitespace-nowrap"
+                      [class]="etikettKlass(e)"
+                      [title]="etikettBeskrivning(e)">{{ e }}</span>
+                  } @else {
+                    <span class="text-text-muted">–</span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-text whitespace-nowrap">{{ utlysning.startdatum }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span class="text-text">{{ utlysning.tillsvidare ? 'Tillsvidare' : utlysning.slutdatum }}</span>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a
+                    routerLink="/utlysningar/ny"
+                    [queryParams]="{ kopieraFran: utlysning.id }"
+                    [attr.aria-label]="'Kopiera ' + utlysning.namn + ' till ny omgång'"
+                    title="Kopiera till ny omgång"
+                    class="inline-block p-1.5 rounded-full text-interactive hover:bg-component-hover">
+                    <span class="material-symbols-outlined text-[18px] align-middle">content_copy</span>
+                  </a>
+                  <a
+                    [routerLink]="['/utlysningar', utlysning.id]"
+                    [attr.aria-label]="'Redigera ' + utlysning.namn"
+                    title="Redigera"
+                    class="inline-block p-1.5 rounded-full text-interactive hover:bg-component-hover">
+                    <span class="material-symbols-outlined text-[18px] align-middle">edit</span>
+                  </a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="px-6 py-12 text-center">
+                  <span class="material-symbols-outlined text-[40px] text-text-subtle">search_off</span>
+                  <p class="text-sm text-text-secondary mt-2">Inga utlysningar matchar sökningen eller den valda filtreringen.</p>
+                  <button
+                    type="button"
+                    (click)="aterstallFilter(); sattFritext('')"
+                    class="mt-4 px-4 py-1.5 text-sm border border-primary text-primary hover:bg-surface-primary transition-colors">
+                    Rensa alla filter
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tabellfot: resultaträkning, paginering och sidstorlek -->
+      <div class="flex items-center justify-between gap-4 flex-wrap px-6 py-4">
+        <p class="text-sm text-text-secondary" aria-live="polite">
+          Visar
+          <span class="font-semibold text-text">{{ visarFran() }}–{{ visarTill() }}</span>
+          av
+          <span class="font-semibold text-text">{{ sorterade().length }}</span>
+          utlysningar
+        </p>
+        @if (antalSidor() > 1) {
+          <nav class="flex items-center gap-1" aria-label="Paginering">
+          <button
+            type="button"
+            (click)="gaTillSida(sida() - 1)"
+            [disabled]="sida() === 1"
+            aria-label="Föregående sida"
+            class="flex items-center px-2 py-1.5 text-sm border border-border text-text-secondary hover:bg-component-hover">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          @for (sidnr of sidnummer(); track sidnr) {
+            <button
+              type="button"
+              (click)="gaTillSida(sidnr)"
+              [attr.aria-current]="sida() === sidnr ? 'page' : null"
+              class="min-w-9 px-2 py-1.5 text-sm border transition-colors"
+              [class.bg-primary]="sida() === sidnr"
+              [class.text-on-primary]="sida() === sidnr"
+              [class.border-primary]="sida() === sidnr"
+              [class.border-border]="sida() !== sidnr"
+              [class.text-text-secondary]="sida() !== sidnr"
+              [class.hover:bg-component-hover]="sida() !== sidnr">
+              {{ sidnr }}
+            </button>
+          }
+          <button
+            type="button"
+            (click)="gaTillSida(sida() + 1)"
+            [disabled]="sida() === antalSidor()"
+            aria-label="Nästa sida"
+            class="flex items-center px-2 py-1.5 text-sm border border-border text-text-secondary hover:bg-component-hover">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+          </nav>
+        }
+        <label class="flex items-center gap-2 text-sm text-text-secondary">
+          Per sida
+          <select
+            [ngModel]="sidstorlek()"
+            (ngModelChange)="sattSidstorlek($event)"
+            class="px-2 py-1 text-sm border border-border bg-surface text-text outline-none focus:border-border-focus">
+            @for (storlek of sidstorlekar; track storlek) {
+              <option [value]="storlek">{{ storlek }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>

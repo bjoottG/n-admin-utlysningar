@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "Malinslatjolajban": {
+    "NypsAdmin": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:class": {
@@ -81,10 +81,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Malinslatjolajban:build:production"
+              "buildTarget": "NypsAdmin:build:production"
             },
             "development": {
-              "buildTarget": "Malinslatjolajban:build:development"
+              "buildTarget": "NypsAdmin:build:development"
             }
           },
           "defaultConfiguration": "development"

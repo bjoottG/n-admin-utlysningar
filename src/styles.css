@@ -1,18 +1,15 @@
 @import "tailwindcss";
 
-button:disabled {
-  background-color: #E9ECEF;
-  color: #ADB5BD;
-  border-color: transparent;
-  cursor: not-allowed;
-}
-
-button:disabled:hover {
-  background-color: #E9ECEF;
-  color: #ADB5BD;
-}
+/**
+ * Kompass Design System - Tailwind v4
+ */
 
 @theme {
+  /* ----------------------------------------
+     COLORS - Primitive palette
+     ---------------------------------------- */
+
+  /* Gray */
   --color-gray-50: #f1f1f4;
   --color-gray-100: #f8f9fa;
   --color-gray-200: #c7c9d1;
@@ -24,6 +21,7 @@ button:disabled:hover {
   --color-gray-800: #343a40;
   --color-gray-900: #212529;
 
+  /* Purple */
   --color-purple-100: #eeeaf6;
   --color-purple-200: #dcd4ed;
   --color-purple-300: #c9b8e1;
@@ -34,55 +32,576 @@ button:disabled:hover {
   --color-purple-800: #492069;
   --color-purple-900: #271941;
 
+  /* Blue */
+  --color-blue-50: #d3ebfd;
   --color-blue-100: #d3ebfd;
+  --color-blue-200: #a3d5fa;
+  --color-blue-300: #72bef8;
+  --color-blue-400: #34a1f4;
   --color-blue-500: #0076cf;
   --color-blue-600: #0065b0;
+  --color-blue-700: #005494;
+  --color-blue-800: #004376;
   --color-blue-900: #00345c;
 
+  /* Red */
+  --color-red-50: #f9dcdf;
   --color-red-100: #f9dcdf;
+  --color-red-200: #f2b0b8;
+  --color-red-300: #ea7b89;
+  --color-red-400: #e04255;
   --color-red-500: #b01729;
+  --color-red-600: #a0081a;
+  --color-red-700: #8a0716;
+  --color-red-800: #710613;
   --color-red-900: #59050f;
 
+  /* Green */
   --color-green-100: #e4f2e8;
+  --color-green-200: #c8e4d2;
+  --color-green-300: #9fd0b0;
+  --color-green-400: #76bc8d;
   --color-green-500: #33844e;
+  --color-green-600: #287140;
+  --color-green-700: #205b33;
+  --color-green-800: #1b4b2b;
   --color-green-900: #143920;
 
+  /* Orange */
+  --color-orange-50: #fdf7ec;
   --color-orange-100: #fdf7ec;
+  --color-orange-200: #faead1;
+  --color-orange-300: #f4be6c;
+  --color-orange-400: #f4be6c;
   --color-orange-500: #f29810;
   --color-orange-600: #dc8604;
+  --color-orange-700: #a86500;
+  --color-orange-800: #7a4a00;
+  --color-orange-900: #4d2e00;
 
+  /* Yellow */
+  --color-yellow-100: #fdfcf2;
+  --color-yellow-200: #f7f4ca;
+  --color-yellow-300: #f7f4ca;
+  --color-yellow-400: #f5ef94;
+  --color-yellow-500: #f3ea62;
+  --color-yellow-600: #e1d205;
+  --color-yellow-700: #b4a804;
+  --color-yellow-800: #8c8303;
+  --color-yellow-900: #5c5600;
+
+  /* Cyan */
+  --color-cyan-100: #e5fafa;
+  --color-cyan-200: #c7fafa;
+  --color-cyan-300: #a8f0ef;
+  --color-cyan-400: #65e2df;
+  --color-cyan-500: #02a6a4;
+  --color-cyan-600: #018381;
+  --color-cyan-700: #006d71;
+  --color-cyan-800: #014c4a;
+  --color-cyan-900: #013232;
+
+  /* Pink */
+  --color-pink-100: #fbedf4;
+  --color-pink-200: #f2c3d9;
+  --color-pink-300: #e89abf;
+  --color-pink-400: #df70a5;
+  --color-pink-500: #d02f7b;
+  --color-pink-600: #a62663;
+  --color-pink-700: #861d50;
+  --color-pink-800: #711943;
+  --color-pink-900: #5a1436;
+
+  /* Magenta */
+  --color-magenta-100: #f0dbef;
+  --color-magenta-200: #e3bae1;
+  --color-magenta-300: #d69ad2;
+  --color-magenta-400: #c46ebf;
+  --color-magenta-500: #93328e;
+  --color-magenta-600: #7b2476;
+  --color-magenta-700: #5b1a58;
+  --color-magenta-800: #471545;
+  --color-magenta-900: #3b113a;
+
+  /* ========================================
+     SEMANTIC COLORS - Använd ENDAST dessa i komponenter
+     ======================================== */
+
+  /* ----------------------------------------
+     PRIMARY - Huvudfärg för CTA, länkar, fokus
+     ---------------------------------------- */
   --color-primary: var(--color-purple-600);
   --color-primary-hover: var(--color-purple-700);
+  --color-primary-active: var(--color-purple-800);
+  --color-primary-light: var(--color-purple-400);
+  --color-primary-lighter: var(--color-purple-200);
+  --color-primary-lightest: var(--color-purple-100);
+  --color-primary-dark: var(--color-purple-800);
+  --color-primary-darker: var(--color-purple-900);
   --color-on-primary: #ffffff;
-  --color-surface-primary: var(--color-purple-100);
 
+  /* Primary Surface - bakgrund med primary-känsla */
+  --color-surface-primary: var(--color-purple-100);
+  --color-on-surface-primary: var(--color-purple-900);
+
+  /* Primary Opacity */
+  --color-primary-10: rgb(98 63 164 / 0.1);
+  --color-primary-20: rgb(98 63 164 / 0.2);
+  --color-primary-30: rgb(98 63 164 / 0.3);
+
+  /* ----------------------------------------
+     SECONDARY - Sekundära åtgärder
+     ---------------------------------------- */
+  --color-secondary: var(--color-gray-600);
+  --color-secondary-hover: var(--color-gray-700);
+  --color-secondary-active: var(--color-gray-800);
+  --color-secondary-light: var(--color-gray-400);
+  --color-secondary-dark: var(--color-gray-800);
+  --color-on-secondary: #ffffff;
+
+  /* Secondary Surface */
+  --color-surface-secondary: var(--color-gray-200);
+  --color-on-surface-secondary: var(--color-gray-900);
+
+  /* ----------------------------------------
+     ERROR (Alarming) - Fel, varningar, destruktiva åtgärder
+     ---------------------------------------- */
+  --color-error: var(--color-red-500);
+  --color-error-hover: var(--color-red-600);
+  --color-error-active: var(--color-red-700);
+  --color-error-light: var(--color-red-200);
+  --color-error-lighter: var(--color-red-100);
+  --color-error-dark: var(--color-red-700);
+  --color-error-darker: var(--color-red-900);
+  --color-on-error: #ffffff;
+
+  /* Error Surface - bakgrund för felmeddelanden */
+  --color-surface-error: var(--color-red-100);
+  --color-on-surface-error: var(--color-red-900);
+  --color-border-error: var(--color-red-500);
+
+  /* Error Opacity */
+  --color-error-10: rgb(176 23 41 / 0.1);
+  --color-error-20: rgb(176 23 41 / 0.2);
+  --color-error-30: rgb(176 23 41 / 0.3);
+
+  /* ----------------------------------------
+     WARNING (Attention) - Uppmärksamhet krävs
+     ---------------------------------------- */
+  --color-warning: var(--color-orange-600);
+  --color-warning-hover: var(--color-orange-700);
+  --color-warning-active: var(--color-orange-800);
+  --color-warning-light: var(--color-orange-300);
+  --color-warning-lighter: var(--color-orange-100);
+  --color-warning-dark: var(--color-orange-800);
+  --color-warning-darker: var(--color-orange-900);
+  --color-on-warning: #ffffff;
+
+  /* Warning Surface */
+  --color-surface-warning: var(--color-orange-100);
+  --color-on-surface-warning: var(--color-orange-900);
+  --color-border-warning: var(--color-orange-600);
+
+  /* Warning Opacity */
+  --color-warning-10: rgb(242 152 16 / 0.1);
+  --color-warning-20: rgb(242 152 16 / 0.2);
+  --color-warning-30: rgb(242 152 16 / 0.3);
+
+  /* ----------------------------------------
+     SUCCESS - Bekräftelser, positiva meddelanden
+     ---------------------------------------- */
+  --color-success: var(--color-green-500);
+  --color-success-hover: var(--color-green-600);
+  --color-success-active: var(--color-green-700);
+  --color-success-light: var(--color-green-300);
+  --color-success-lighter: var(--color-green-100);
+  --color-success-dark: var(--color-green-700);
+  --color-success-darker: var(--color-green-900);
+  --color-on-success: #ffffff;
+
+  /* Success Surface */
+  --color-surface-success: var(--color-green-100);
+  --color-on-surface-success: var(--color-green-900);
+  --color-border-success: var(--color-green-500);
+
+  /* Success Opacity */
+  --color-success-10: rgb(51 132 78 / 0.1);
+  --color-success-20: rgb(51 132 78 / 0.2);
+  --color-success-30: rgb(51 132 78 / 0.3);
+
+  /* ----------------------------------------
+     INFO (Informative) - Information, tips
+     ---------------------------------------- */
+  --color-info: var(--color-blue-500);
+  --color-info-hover: var(--color-blue-600);
+  --color-info-active: var(--color-blue-700);
+  --color-info-light: var(--color-blue-300);
+  --color-info-lighter: var(--color-blue-100);
+  --color-info-dark: var(--color-blue-700);
+  --color-info-darker: var(--color-blue-900);
+  --color-on-info: #ffffff;
+
+  /* Info Surface */
+  --color-surface-info: var(--color-blue-100);
+  --color-on-surface-info: var(--color-blue-900);
+  --color-border-info: var(--color-blue-500);
+
+  /* Info Opacity */
+  --color-info-10: rgb(0 118 207 / 0.1);
+  --color-info-20: rgb(0 118 207 / 0.2);
+  --color-info-30: rgb(0 118 207 / 0.3);
+
+  /* ----------------------------------------
+     NEUTRAL SURFACES - Bakgrunder
+     ---------------------------------------- */
   --color-background: #ffffff;
+  --color-on-background: var(--color-gray-900);
+
   --color-surface: #ffffff;
   --color-surface-muted: var(--color-gray-100);
   --color-surface-subtle: var(--color-gray-50);
+  --color-surface-elevated: #ffffff;
+  --color-surface-inverse: var(--color-gray-900);
   --color-on-surface: var(--color-gray-900);
+  --color-on-surface-inverse: #ffffff;
 
+  /* Alternative surface (lite mörkare) */
+  --color-surface-alt: var(--color-gray-200);
+  --color-on-surface-alt: var(--color-gray-900);
+
+  /* Neutral surface - för default badges, tags etc */
+  --color-neutral-200: #e9ecef;
+  --color-neutral-1000: #161616;
+  --color-surface-neutral: var(--color-neutral-200);
+  --color-on-surface-neutral: var(--color-neutral-1000);
+
+  /* ----------------------------------------
+     TEXT - Typografifärger
+     ---------------------------------------- */
   --color-text: var(--color-gray-900);
   --color-text-secondary: var(--color-gray-700);
   --color-text-muted: var(--color-gray-600);
   --color-text-subtle: var(--color-gray-500);
+  --color-text-disabled: var(--color-gray-400);
+  --color-text-inverse: #ffffff;
+  --color-text-primary: var(--color-primary);
+  --color-text-error: var(--color-error);
+  --color-text-success: var(--color-success);
+  --color-text-warning: var(--color-warning);
+  --color-text-info: var(--color-info);
 
+  /* ----------------------------------------
+     BORDER - Kantlinjer
+     ---------------------------------------- */
   --color-border: var(--color-gray-300);
   --color-border-muted: var(--color-gray-200);
+  --color-border-strong: var(--color-gray-500);
+  --color-border-focus: var(--color-purple-600);
+  --color-border-primary: var(--color-primary);
+
+  /* ----------------------------------------
+     ACCENT - Sekundär CTA, highlights, featured content
+     ---------------------------------------- */
+  --color-accent: var(--color-orange-500);
+  --color-accent-hover: var(--color-orange-600);
+  --color-accent-active: var(--color-orange-700);
+  --color-accent-light: var(--color-orange-300);
+  --color-accent-lighter: var(--color-orange-100);
+  --color-on-accent: #ffffff;
+
+  /* Accent Surface */
+  --color-surface-accent: var(--color-orange-100);
+  --color-on-surface-accent: var(--color-orange-900);
+
+  /* Accent Opacity */
+  --color-accent-10: rgb(242 152 16 / 0.1);
+  --color-accent-20: rgb(242 152 16 / 0.2);
+  --color-accent-30: rgb(242 152 16 / 0.3);
+
+  /* ----------------------------------------
+     INTERACTIVE - Klickbara element
+     ---------------------------------------- */
+  --color-interactive: var(--color-purple-600);
+  --color-interactive-hover: var(--color-purple-700);
+  --color-interactive-active: var(--color-purple-800);
+  --color-interactive-muted: var(--color-gray-600);
+  --color-interactive-muted-hover: var(--color-gray-700);
+
+  /* ----------------------------------------
+     COMPONENT INTERACTION - Hover/Active states
+     ---------------------------------------- */
+  --color-component-hover: var(--color-purple-100);
+  --color-component-active: var(--color-purple-100);
+  --color-component-selected: var(--color-purple-100);
+
+  /* ----------------------------------------
+     DISABLED STATE
+     ---------------------------------------- */
+  --color-disabled-bg: var(--color-gray-200);
+  --color-disabled-text: var(--color-gray-500);
+  --color-disabled-border: transparent;
+
+  /* ----------------------------------------
+     HIGHLIGHT
+     ---------------------------------------- */
+  --color-highlight-bg: var(--color-yellow-200);
+  --color-highlight-text: var(--color-gray-900);
+
+  /* ----------------------------------------
+     TYPOGRAPHY
+     ---------------------------------------- */
 
   --font-sans: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, monospace;
+  --font-serif: "Noe Display", Georgia, "Times New Roman", serif;
 
+  /* Font sizes */
   --text-xs: 12px;
   --text-sm: 14px;
   --text-base: 16px;
   --text-lg: 18px;
   --text-xl: 24px;
+  --text-2xl: 28px;
+  --text-3xl: 32px;
+  --text-4xl: 40px;
+  --text-5xl: 48px;
+  --text-6xl: 56px;
+
+  /* Line heights */
+  --leading-tight: 1.2;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Font weights (namnrymden --font-weight-* så att Tailwinds viktklasser fungerar) */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ----------------------------------------
+     SPACING
+     ---------------------------------------- */
+
+  --spacing-0: 0;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* ----------------------------------------
+     BORDER RADIUS - Primitive
+     ---------------------------------------- */
 
   --radius-none: 0;
   --radius-sm: 4px;
   --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Component-specific radius */
   --radius-button: 0;
 
+  /* ========================================
+     FOCUS RING - Tillgänglighet
+     ======================================== */
+  --shadow-focus: 0 0 0 3px var(--color-primary-30);
+  --shadow-focus-error: 0 0 0 3px var(--color-error-30);
+  --ring-focus: 3px;
+  --ring-offset-focus: 2px;
+
+  /* ----------------------------------------
+     SHADOWS - Primitive
+     ---------------------------------------- */
+
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* ----------------------------------------
+     Z-INDEX
+     ---------------------------------------- */
+
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* ----------------------------------------
+     TRANSITIONS
+     ---------------------------------------- */
+
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+}
+
+/* ============================================
+   DARK THEME - Aktiveras med data-theme="dark" på <html>
+   ============================================ */
+
+[data-theme="dark"] {
+  /* ----------------------------------------
+     Primary - ljusare i dark mode
+     ---------------------------------------- */
+  --color-primary: var(--color-purple-400);
+  --color-primary-hover: var(--color-purple-300);
+  --color-primary-active: var(--color-purple-500);
+  --color-primary-light: var(--color-purple-300);
+  --color-primary-lighter: var(--color-purple-200);
+  --color-primary-dark: var(--color-purple-600);
+  --color-on-primary: var(--color-gray-900);
+
+  --color-surface-primary: var(--color-purple-900);
+  --color-on-surface-primary: var(--color-purple-100);
+
+  /* ----------------------------------------
+     Surfaces - mörka bakgrunder
+     ---------------------------------------- */
+  --color-background: var(--color-gray-900);
+  --color-on-background: #ffffff;
+
+  --color-surface: var(--color-gray-900);
+  --color-surface-muted: var(--color-gray-800);
+  --color-surface-subtle: var(--color-gray-800);
+  --color-surface-elevated: var(--color-gray-800);
+  --color-surface-inverse: #ffffff;
+  --color-surface-alt: var(--color-gray-700);
+  --color-on-surface: #ffffff;
+  --color-on-surface-inverse: var(--color-gray-900);
+  --color-on-surface-alt: #ffffff;
+
+  /* Semantic surfaces */
+  --color-surface-error: var(--color-red-900);
+  --color-on-surface-error: var(--color-red-100);
+  --color-surface-warning: var(--color-orange-900);
+  --color-on-surface-warning: var(--color-orange-100);
+  --color-surface-success: var(--color-green-900);
+  --color-on-surface-success: var(--color-green-100);
+  --color-surface-info: var(--color-blue-900);
+  --color-on-surface-info: var(--color-blue-100);
+  --color-surface-secondary: var(--color-gray-700);
+  --color-on-surface-secondary: #ffffff;
+  --color-surface-neutral: var(--color-gray-700);
+  --color-on-surface-neutral: var(--color-gray-100);
+
+  /* ----------------------------------------
+     Text
+     ---------------------------------------- */
+  --color-text: #ffffff;
+  --color-text-secondary: var(--color-gray-300);
+  --color-text-muted: var(--color-gray-400);
+  --color-text-subtle: var(--color-gray-500);
+  --color-text-disabled: var(--color-gray-600);
+  --color-text-inverse: var(--color-gray-900);
+
+  /* ----------------------------------------
+     Border
+     ---------------------------------------- */
+  --color-border: var(--color-gray-700);
+  --color-border-muted: var(--color-gray-800);
+  --color-border-strong: var(--color-gray-600);
+  --color-border-focus: var(--color-purple-400);
+  --color-border-primary: var(--color-purple-400);
+
+  /* ----------------------------------------
+     Accent - dark mode
+     ---------------------------------------- */
+  --color-accent: var(--color-orange-400);
+  --color-accent-hover: var(--color-orange-300);
+  --color-accent-active: var(--color-orange-500);
+  --color-accent-light: var(--color-orange-300);
+  --color-accent-lighter: var(--color-orange-200);
+  --color-on-accent: var(--color-gray-900);
+
+  --color-surface-accent: var(--color-orange-900);
+  --color-on-surface-accent: var(--color-orange-100);
+
+  /* ----------------------------------------
+     Interactive
+     ---------------------------------------- */
+  --color-interactive: var(--color-purple-400);
+  --color-interactive-hover: var(--color-purple-300);
+  --color-interactive-active: var(--color-purple-500);
+
+  /* ----------------------------------------
+     Component states
+     ---------------------------------------- */
+  --color-component-hover: var(--color-gray-700);
+  --color-component-active: var(--color-gray-700);
+  --color-component-selected: var(--color-purple-800);
+
+  --color-disabled-bg: var(--color-gray-700);
+  --color-disabled-text: var(--color-gray-500);
+
+  /* ----------------------------------------
+     Shadows - starkare i dark mode
+     ---------------------------------------- */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+
+  /* ----------------------------------------
+     Focus - dark mode
+     ---------------------------------------- */
+  --shadow-focus: 0 0 0 3px rgb(158 133 203 / 0.5);
+}
+
+/* ============================================
+   UTILITY CLASSES - Endast saker som saknas i Tailwind
+   ============================================ */
+
+@utility sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
+
+
+/* ============================================
+   BASE
+   ============================================ */
+
+body {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
+
+button:disabled {
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-color: transparent;
+  cursor: not-allowed;
 }

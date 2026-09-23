@@ -1,164 +1,266 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { UtlysningService, Utlysning } from '../utlysning.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  ETIKETT_INFO,
+  FinansieringsmedelPost,
+  Informationstext,
+  InformationstextNiva,
+  STATUS_INFO,
+  Utlysning,
+  UtlysningEtikett,
+  UtlysningService,
+  UtlysningStatus,
+} from '../utlysning.service';
+import { ToppmenyComponent } from '../delade/toppmeny.component';
+import { DatumValjareComponent } from '../delade/datum-valjare.component';
+import { FinansieringsmedelModalComponent } from '../delade/finansieringsmedel-modal.component';
 
-interface FieldError {
-  field: string;
-  label: string;
-}
+const NYTT_INTERNT_NAMN = '__nytt__';
 
 @Component({
   selector: 'app-utlysning-detalj',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink, ToppmenyComponent, DatumValjareComponent, FinansieringsmedelModalComponent],
   templateUrl: './utlysning-detalj.component.html',
 })
-export class UtlysningDetaljComponent implements OnInit {
-  private service = inject(UtlysningService);
-  private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef);
+export class UtlysningDetaljComponent {
+  private readonly service = inject(UtlysningService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  utlysning!: Utlysning;
-  isDirty = false;
-  submitted = false;
-  showErrorSummary = false;
-  showModal = false;
-  showUnsavedModal = false;
-  showTaBortModal = false;
-  showTaBortBekraftaModal = false;
-  showToast = false;
-  errors: FieldError[] = [];
-  private pendingPath: string | null = null;
-  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly statusInfo = STATUS_INFO;
+  readonly etikettInfo = ETIKETT_INFO;
+  readonly nyttInterntNamnVarde = NYTT_INTERNT_NAMN;
+  readonly diarieSystemLista = this.service.hamtaDiarieSystem();
+  readonly sprakLista = this.service.hamtaSprak();
+  readonly visaFinansieringsmedelModal = signal(false);
 
-  ngOnInit() {
-    if (!this.service.utlysning) {
-      this.router.navigate(['/utlysning/ny']);
+  readonly utlysning = signal<Utlysning | null>(null);
+
+  // Redigerbara uppgifter (lokala kopior, sparas via Spara ändringar)
+  readonly namn = signal('');
+  readonly diarienummer = signal('');
+  readonly diarieSystem = signal('');
+  readonly interntNamn = signal('');
+  readonly sprak = signal('');
+
+  // Internt namn – värdeförråd med möjlighet att lägga till nya värden
+  readonly internaNamn = signal<string[]>([]);
+  readonly visaNyttInterntNamn = signal(false);
+  readonly nyttInterntNamn = signal('');
+  readonly startdatum = signal('');
+  readonly slutdatum = signal('');
+  readonly tillsvidare = signal(false);
+  /** Ska utlysningen vara öppen i Min ansökan? */
+  readonly oppenIMa = signal<'ja' | 'nej'>('ja');
+  /** Vid Nej: datum då man inte längre kan skapa ärenden i Nyps (tomt = tills vidare). */
+  readonly nypsStangDatum = signal('');
+  readonly utlysningstext = signal('');
+  readonly fordjupandeBeskrivning = signal('');
+  readonly finansieringsmedel = signal<string[]>([]);
+  readonly sparadNyss = signal(false);
+
+  /** Visas när man försökt spara utan att alla obligatoriska fält är ifyllda. */
+  readonly visaValidering = signal(false);
+
+  // Informationstexter (visas i läsläge)
+  readonly texter = signal<Informationstext[]>([]);
+
+  readonly status = computed<UtlysningStatus | null>(() => {
+    const u = this.utlysning();
+    return u ? this.service.status(u) : null;
+  });
+
+  readonly etikett = computed<UtlysningEtikett | null>(() => {
+    const u = this.utlysning();
+    return u ? this.service.etikett(u) : null;
+  });
+
+  /** Framhäv kopiera-knappen när utlysningen är inaktiv eller utlöpt. */
+  readonly framhevKopiera = computed(
+    () => this.status() === 'Inaktiv' || this.etikett() === 'Utlöpt',
+  );
+
+  readonly serie = computed(() => {
+    const u = this.utlysning();
+    return u ? this.service.hamtaSerie(u.interntNamn) : [];
+  });
+
+  /** Alla aktuella valideringsfel för obligatoriska fält. */
+  readonly valideringsfel = computed<string[]>(() => {
+    const fel: string[] = [];
+    if (!this.namn().trim()) fel.push('Ange en rubrik');
+    if (!this.sprak()) fel.push('Välj språk');
+    if (this.oppenIMa() === 'ja') {
+      if (!this.startdatum()) fel.push('Ange datum för när utlysningen öppnar i MA');
+      if (!this.tillsvidare() && !this.slutdatum()) fel.push('Ange datum för när utlysningen stänger i MA eller kryssa i Tillsvidare');
+    } else if (!this.tillsvidare() && !this.nypsStangDatum()) {
+      fel.push('Ange datum för när utlysningen stängs i Nyps eller kryssa i Tillsvidare');
+    }
+    if (this.finansieringsmedel().length === 0) fel.push('Lägg till minst ett finansieringsmedel');
+    return fel;
+  });
+
+  readonly kanSpara = computed(() => this.valideringsfel().length === 0);
+
+  constructor() {
+    this.route.paramMap.subscribe((params) => {
+      const id = Number(params.get('id'));
+      const utlysning = Number.isFinite(id) ? this.service.hamtaUtlysning(id) : undefined;
+      if (!utlysning) {
+        this.router.navigate(['/utlysningar']);
+        return;
+      }
+      this.ladda(utlysning);
+    });
+  }
+
+  private ladda(utlysning: Utlysning): void {
+    // Kopia så att signalen alltid får en ny referens och härledda värden räknas om efter Spara.
+    this.utlysning.set({ ...utlysning });
+    this.namn.set(utlysning.namn);
+    this.diarienummer.set(utlysning.diarienummer ?? '');
+    this.diarieSystem.set(utlysning.diarieSystem ?? '');
+    this.interntNamn.set(utlysning.interntNamn);
+    this.internaNamn.set(this.service.hamtaInternaNamn());
+    this.visaNyttInterntNamn.set(false);
+    this.nyttInterntNamn.set('');
+    this.sprak.set(utlysning.sprak ?? '');
+    this.startdatum.set(utlysning.startdatum);
+    this.tillsvidare.set(!!utlysning.tillsvidare);
+    this.oppenIMa.set(utlysning.ejOppenIMa ? 'nej' : 'ja');
+    this.nypsStangDatum.set(utlysning.ejOppenIMa && !utlysning.tillsvidare ? utlysning.slutdatum : '');
+    this.slutdatum.set(utlysning.tillsvidare ? '' : utlysning.slutdatum);
+    this.utlysningstext.set(utlysning.utlysningstext ?? '');
+    this.fordjupandeBeskrivning.set(utlysning.fordjupandeBeskrivning ?? '');
+    this.finansieringsmedel.set([...(utlysning.finansieringsmedel ?? [])]);
+    this.sparadNyss.set(false);
+    this.visaValidering.set(false);
+    this.laddaTexter(utlysning);
+  }
+
+  private laddaTexter(utlysning: Utlysning): void {
+    this.texter.set(this.service.hamtaInformationstexterFor(utlysning));
+  }
+
+  private skrollaTillSummering(): void {
+    setTimeout(() =>
+      document.getElementById('valideringssummering')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    );
+  }
+
+  spara(): void {
+    const u = this.utlysning();
+    if (!u) return;
+    if (!this.kanSpara()) {
+      this.visaValidering.set(true);
+      this.skrollaTillSummering();
       return;
     }
-    this.utlysning = { ...this.service.utlysning, finansieringsmedel: [...this.service.utlysning.finansieringsmedel] };
-
-    if (this.service.justSaved) {
-      this.service.justSaved = false;
-      this.showToast = true;
-      this.toastTimer = setTimeout(() => { this.showToast = false; this.cdr.markForCheck(); }, 5000);
-    }
+    this.service.uppdatera(u.id, {
+      namn: this.namn().trim(),
+      diarienummer: this.diarienummer(),
+      diarieSystem: this.diarieSystem(),
+      interntNamn: this.interntNamn() || u.interntNamn,
+      sprak: this.sprak(),
+      startdatum: this.oppenIMa() === 'ja' ? this.startdatum() : u.skapad,
+      slutdatum: this.tillsvidare()
+        ? '9999-12-31'
+        : this.oppenIMa() === 'ja'
+          ? this.slutdatum()
+          : this.nypsStangDatum(),
+      tillsvidare: this.tillsvidare(),
+      ejOppenIMa: this.oppenIMa() === 'nej',
+      utlysningstext: this.utlysningstext(),
+      fordjupandeBeskrivning: this.fordjupandeBeskrivning(),
+      finansieringsmedel: this.finansieringsmedel(),
+    });
+    this.ladda(this.service.hamtaUtlysning(u.id)!);
+    this.sparadNyss.set(true);
   }
 
-  markDirty() {
-    this.isDirty = true;
+  angra(): void {
+    const u = this.utlysning();
+    if (u) this.ladda(u);
   }
 
-  hasError(field: string): boolean {
-    return this.submitted && this.errors.some((e) => e.field === field);
-  }
-
-  scrollToField(field: string) {
-    const el = document.getElementById('field-' + field);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  dismissErrors() {
-    this.showErrorSummary = false;
-  }
-
-  spara() {
-    this.submitted = true;
-    this.errors = [];
-
-    if (!this.utlysning.utlysningNamn.trim()) {
-      this.errors.push({ field: 'utlysningNamn', label: 'Utlysningens namn saknas' });
-    }
-    if (!this.utlysning.startstoedformsnod) {
-      this.errors.push({ field: 'startstoedformsnod', label: 'Startstödformsnod har ej valts' });
-    }
-    if (!this.utlysning.sprak) {
-      this.errors.push({ field: 'sprak', label: 'Språk har ej valts' });
-    }
-    if (!this.utlysning.periodFran) {
-      this.errors.push({ field: 'periodFran', label: 'Period från saknas' });
-    }
-    if (!this.utlysning.periodTill) {
-      this.errors.push({ field: 'periodTill', label: 'Period till saknas' });
-    }
-    if (this.utlysning.finansieringsmedel.length === 0) {
-      this.errors.push({ field: 'finansieringsmedel', label: 'Det krävs minst ett finansieringsmedel' });
-    }
-
-    if (this.errors.length > 0) {
-      this.showErrorSummary = true;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    this.showErrorSummary = false;
-    this.showModal = true;
-  }
-
-  stangModal() {
-    this.showModal = false;
-  }
-
-  bekraftaSpara() {
-    this.showModal = false;
-    this.service.utlysning = { ...this.utlysning, finansieringsmedel: [...this.utlysning.finansieringsmedel] };
-    this.isDirty = false;
-    this.submitted = false;
-    this.showToast = true;
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => { this.showToast = false; this.cdr.markForCheck(); }, 5000);
-  }
-
-  stangToast() {
-    this.showToast = false;
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-  }
-
-  navigeraTill(path: string) {
-    if (this.isDirty) {
-      this.pendingPath = path;
-      this.showUnsavedModal = true;
+  valInterntNamn(varde: string): void {
+    if (varde === NYTT_INTERNT_NAMN) {
+      this.visaNyttInterntNamn.set(true);
     } else {
-      this.router.navigate([path]);
+      this.interntNamn.set(varde);
     }
   }
 
-  stangUnsavedModal() {
-    this.showUnsavedModal = false;
-    this.pendingPath = null;
+  sparaNyttInterntNamn(): void {
+    const namn = this.nyttInterntNamn().trim();
+    if (!namn) return;
+    this.service.laggTillInterntNamn(namn);
+    this.internaNamn.set(this.service.hamtaInternaNamn());
+    this.interntNamn.set(namn);
+    this.visaNyttInterntNamn.set(false);
+    this.nyttInterntNamn.set('');
   }
 
-  bekraftaNavigering() {
-    this.showUnsavedModal = false;
-    if (this.pendingPath) {
-      this.router.navigate([this.pendingPath]);
+  hanteraFinansieringsmedelVal(nyaVal: string[]): void {
+    this.finansieringsmedel.set(nyaVal);
+    this.visaFinansieringsmedelModal.set(false);
+  }
+
+  taBortFinansieringsmedel(index: number): void {
+    if (this.finansieringsmedel().length <= 1) return;
+    this.finansieringsmedel.update((medel) => medel.filter((_, i) => i !== index));
+  }
+
+  postFor(etikett: string): FinansieringsmedelPost | undefined {
+    return this.service.hamtaFinansieringsmedelPost(etikett);
+  }
+
+  nivaKlass(niva: InformationstextNiva): string {
+    return niva === 'Stödform'
+      ? 'bg-surface-info text-on-surface-info'
+      : 'bg-surface-primary text-on-surface-primary';
+  }
+
+  /** Badge-etikett: stödformens namn respektive utlysningens namn. */
+  nivaEtikett(text: Informationstext): string {
+    if (text.niva === 'Stödform') return text.stodformPrefix?.split(' > ')[0] ?? 'Stödform';
+    return this.utlysning()?.namn ?? 'Utlysning';
+  }
+
+  statusKlass(status: UtlysningStatus): string {
+    return status === 'Aktiv'
+      ? 'bg-surface-success text-on-surface-success border border-border-success'
+      : 'bg-surface-warning text-on-surface-warning border border-border-warning';
+  }
+
+  etikettKlass(etikett: UtlysningEtikett): string {
+    switch (etikett) {
+      case 'Kommande':
+        return 'bg-surface-primary text-on-surface-primary border border-primary-light';
+      case 'Öppen':
+        return 'bg-surface-info text-on-surface-info border border-border-info';
+      case 'Utlöpt':
+        return 'bg-pink-100 text-pink-800 border border-pink-500';
+      case 'Dold':
+        return 'bg-cyan-100 text-cyan-800 border border-cyan-500';
     }
   }
 
-  taBort() {
-    const startDatum = new Date(this.utlysning.periodFran);
-    const idag = new Date();
-    if (startDatum <= idag) {
-      this.showTaBortModal = true;
-    } else {
-      this.showTaBortBekraftaModal = true;
-    }
+  statusBeskrivning(status: UtlysningStatus): string {
+    return this.statusInfo.find((s) => s.status === status)?.beskrivning ?? '';
   }
 
-  stangTaBortModal() {
-    this.showTaBortModal = false;
+  etikettBeskrivning(etikett: UtlysningEtikett): string {
+    return this.etikettInfo.find((e) => e.etikett === etikett)?.beskrivning ?? '';
   }
 
-  stangTaBortBekraftaModal() {
-    this.showTaBortBekraftaModal = false;
+  statusFor(utlysning: Utlysning): UtlysningStatus {
+    return this.service.status(utlysning);
   }
 
-  bekraftaTaBort() {
-    this.showTaBortBekraftaModal = false;
-    this.router.navigate(['/utlysning/ny']);
+  etikettFor(utlysning: Utlysning): UtlysningEtikett | null {
+    return this.service.etikett(utlysning);
   }
 
-  tillbakatillLista() {
-    this.navigeraTill('/utlysning/ny');
-  }
 }

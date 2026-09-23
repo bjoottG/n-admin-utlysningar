@@ -1,0 +1,154 @@
+<div class="fixed inset-0 z-[1040] bg-black/40" (click)="stang.emit()" aria-hidden="true"></div>
+
+<div class="fixed inset-0 z-[1050] flex items-center justify-center p-6 pointer-events-none">
+  <div
+    class="pointer-events-auto w-full max-w-[900px] max-h-[85vh] flex flex-col bg-surface border border-border shadow-2xl"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Lägg till finansieringsmedel">
+
+    <!-- Rubrik -->
+    <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-border-muted">
+      <div>
+        <h2 class="text-lg font-semibold text-text">Lägg till finansieringsmedel</h2>
+        <p class="text-[13px] text-text-muted mt-0.5">Kryssa i de finansieringsmedel som ska gälla för utlysningen.</p>
+      </div>
+      <button
+        type="button"
+        (click)="stang.emit()"
+        aria-label="Stäng"
+        class="p-1.5 rounded-full text-text-muted hover:text-text hover:bg-component-hover">
+        <span class="material-symbols-outlined text-[20px] align-middle">close</span>
+      </button>
+    </div>
+
+    <!-- Sök -->
+    <div class="px-6 py-3 border-b border-border-muted">
+      <div class="relative max-w-[400px]">
+        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[20px] text-text-muted pointer-events-none">search</span>
+        <input
+          type="text"
+          placeholder="Sök anslag, uppdrag, deluppdrag eller kontotyp ..."
+          autocomplete="off"
+          aria-label="Sök finansieringsmedel"
+          [ngModel]="sok()"
+          (ngModelChange)="sattSok($event)"
+          class="w-full pl-9 pr-3 py-2 text-sm text-text border border-border bg-surface placeholder:text-text-subtle outline-none focus:border-border-focus focus:shadow-focus" />
+      </div>
+    </div>
+
+    <!-- Tabell -->
+    <div class="flex-1 overflow-y-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-border text-left">
+            <th scope="col" class="pl-6 pr-2 py-2.5 w-12"><span class="sr-only">Välj</span></th>
+            <th scope="col" class="px-4 py-2.5 font-semibold text-text">Anslag</th>
+            <th scope="col" class="px-4 py-2.5 font-semibold text-text">Uppdrag</th>
+            <th scope="col" class="px-4 py-2.5 font-semibold text-text">Deluppdrag</th>
+            <th scope="col" class="px-4 py-2.5 font-semibold text-text">Kontotyp</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (post of sidansPoster(); track post.id) {
+            <tr
+              (click)="toggle(post)"
+              class="border-b border-border-muted cursor-pointer"
+              [class]="arVald(post) ? 'bg-component-selected' : 'odd:bg-surface-subtle hover:bg-component-hover'">
+              <td class="pl-6 pr-2 py-2.5">
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="'Välj ' + etikett(post)"
+                  [checked]="arVald(post)"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggle(post)"
+                  class="w-4 h-4 accent-primary align-middle" />
+              </td>
+              <td class="px-4 py-2.5 text-text">{{ post.anslag }}</td>
+              <td class="px-4 py-2.5 text-text">{{ post.uppdrag }}</td>
+              <td class="px-4 py-2.5 text-text">{{ post.deluppdrag }}</td>
+              <td class="px-4 py-2.5 text-text">{{ post.kontotyp }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-6 py-10 text-center text-sm text-text-muted">
+                Inga finansieringsmedel matchar ”{{ sok() }}”.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginering -->
+    <div class="flex items-center justify-between gap-4 flex-wrap px-6 py-3 border-t border-border-muted">
+      <p class="text-sm text-text-secondary" aria-live="polite">
+        Visar
+        <span class="font-semibold text-text">{{ visarFran() }}–{{ visarTill() }}</span>
+        av
+        <span class="font-semibold text-text">{{ filtrerade().length }}</span>
+        finansieringsmedel
+      </p>
+      @if (antalSidor() > 1) {
+        <nav class="flex items-center gap-1" aria-label="Paginering">
+          <button
+            type="button"
+            (click)="gaTillSida(sida() - 1)"
+            [disabled]="sida() === 1"
+            aria-label="Föregående sida"
+            class="flex items-center px-2 py-1 text-sm border border-border text-text-secondary hover:bg-component-hover">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          @for (sidnr of sidnummer(); track sidnr) {
+            <button
+              type="button"
+              (click)="gaTillSida(sidnr)"
+              [attr.aria-current]="sida() === sidnr ? 'page' : null"
+              class="min-w-8 px-2 py-1 text-sm border transition-colors"
+              [class.bg-primary]="sida() === sidnr"
+              [class.text-on-primary]="sida() === sidnr"
+              [class.border-primary]="sida() === sidnr"
+              [class.border-border]="sida() !== sidnr"
+              [class.text-text-secondary]="sida() !== sidnr"
+              [class.hover:bg-component-hover]="sida() !== sidnr">
+              {{ sidnr }}
+            </button>
+          }
+          <button
+            type="button"
+            (click)="gaTillSida(sida() + 1)"
+            [disabled]="sida() === antalSidor()"
+            aria-label="Nästa sida"
+            class="flex items-center px-2 py-1 text-sm border border-border text-text-secondary hover:bg-component-hover">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </nav>
+      }
+    </div>
+
+    <!-- Knapprad -->
+    <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-border-muted">
+      <p class="text-sm text-text-secondary">
+        <span class="font-semibold text-text">{{ lokaltValda().length }}</span> valda
+        @if (kravMinstEtt() && lokaltValda().length === 0) {
+          <span class="text-error"> – minst ett finansieringsmedel krävs</span>
+        }
+      </p>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="stang.emit()"
+          class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">
+          Avbryt
+        </button>
+        <button
+          type="button"
+          (click)="sparaVal()"
+          [disabled]="!kanSpara()"
+          class="px-4 py-2 text-sm bg-primary text-on-primary hover:bg-primary-hover transition-colors">
+          Spara val
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
