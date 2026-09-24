@@ -6,7 +6,7 @@
   <nav class="flex items-center gap-1 px-6 py-2.5" aria-label="Brödsmulor">
     <a routerLink="/" class="text-[15px] text-interactive hover:underline cursor-pointer">Startsida</a>
     <span class="text-[15px] text-text-muted mx-0.5">/</span>
-    <span class="text-[15px] text-text">Utlysningar</span>
+    <span class="text-[15px] text-text">{{ sidtitel }}</span>
   </nav>
 
   <!-- Sidinnehåll -->
@@ -15,15 +15,21 @@
     <!-- Sidhuvud -->
     <div class="flex items-end justify-between gap-4 flex-wrap mb-4">
       <div>
-        <h1 class="text-2xl font-semibold text-text leading-tight">Utlysningar</h1>
+        <h1 class="text-2xl font-semibold text-text leading-tight">{{ sidtitel }}</h1>
         <p class="text-sm text-text-secondary mt-2 max-w-[70ch]">
           Nedan listas samtliga utlysningar för alla organisationer, sorterade med senast
           skapad först. Använd sök och filter i tabellen för att avgränsa listan.
         </p>
+        @if (nyVariant) {
+          <p class="flex items-start gap-1.5 text-[13px] text-on-surface-info bg-surface-info border border-border-info px-3 py-2 mt-3 max-w-[70ch]">
+            <span class="material-symbols-outlined text-[18px] shrink-0">info</span>
+            <span>Ny version: valet av finansieringsmedel har ersatts av <strong>Finansiering</strong> från administrationsområdet med samma namn. Utlysningar kan här även tas bort.</span>
+          </p>
+        }
       </div>
       <button
         type="button"
-        routerLink="/utlysningar/ny"
+        [routerLink]="bas + '/ny'"
         class="flex items-center gap-1.5 px-4 py-2 text-sm bg-primary text-on-primary hover:bg-primary-hover transition-colors cursor-pointer">
         <span class="material-symbols-outlined text-[18px]">add</span>
         Skapa ny utlysning
@@ -366,6 +372,9 @@
               <th scope="col" class="px-4 py-3 font-semibold text-text">Utlysning</th>
               <th scope="col" class="px-4 py-3 font-semibold text-text">Organisation</th>
               <th scope="col" class="px-4 py-3 font-semibold text-text">Stödform</th>
+              @if (nyVariant) {
+                <th scope="col" class="px-4 py-3 font-semibold text-text">Finansiering</th>
+              }
               <th scope="col" class="px-4 py-3 font-semibold text-text">Status</th>
               <th scope="col" class="px-4 py-3 font-semibold text-text">Etiketter</th>
               <th scope="col" class="px-4 py-3 font-semibold text-text whitespace-nowrap">
@@ -392,12 +401,24 @@
               <tr class="border-b border-border-muted odd:bg-surface-subtle">
                 <td class="pl-6 pr-4 py-3 text-text whitespace-nowrap">{{ utlysning.skapad }}</td>
                 <td class="px-4 py-3">
-                  <a [routerLink]="['/utlysningar', utlysning.id]" class="font-semibold text-interactive hover:underline">{{ utlysning.namn }}</a>
+                  <a [routerLink]="[bas, utlysning.id]" class="font-semibold text-interactive hover:underline">{{ utlysning.namn }}</a>
                 </td>
                 <td class="px-4 py-3 text-text whitespace-nowrap">{{ utlysning.organisation }}</td>
                 <td class="px-4 py-3 text-text max-w-[420px]" [title]="utlysning.stodform">
                   {{ formateraStodform(utlysning.stodform) }}
                 </td>
+                @if (nyVariant) {
+                  <td class="px-4 py-3 text-text max-w-[260px]">
+                    @if (finansieringNamn(utlysning); as namn) {
+                      @if (namn.length) {
+                        <span class="block truncate" [title]="namn.join(', ')">{{ namn[0] }}</span>
+                        @if (namn.length > 1) { <span class="text-xs text-text-muted">+{{ namn.length - 1 }} till</span> }
+                      } @else {
+                        <span class="text-text-muted">–</span>
+                      }
+                    }
+                  </td>
+                }
                 <td class="px-4 py-3">
                   <span
                     class="inline-block px-2 py-0.5 text-xs font-medium rounded-sm cursor-help whitespace-nowrap"
@@ -420,7 +441,7 @@
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
                   <a
-                    routerLink="/utlysningar/ny"
+                    [routerLink]="bas + '/ny'"
                     [queryParams]="{ kopieraFran: utlysning.id }"
                     [attr.aria-label]="'Kopiera ' + utlysning.namn + ' till ny omgång'"
                     title="Kopiera till ny omgång"
@@ -428,17 +449,27 @@
                     <span class="material-symbols-outlined text-[18px] align-middle">content_copy</span>
                   </a>
                   <a
-                    [routerLink]="['/utlysningar', utlysning.id]"
+                    [routerLink]="[bas, utlysning.id]"
                     [attr.aria-label]="'Redigera ' + utlysning.namn"
                     title="Redigera"
                     class="inline-block p-1.5 rounded-full text-interactive hover:bg-component-hover">
                     <span class="material-symbols-outlined text-[18px] align-middle">edit</span>
                   </a>
+                  @if (nyVariant) {
+                    <button
+                      type="button"
+                      (click)="raderaKandidat.set(utlysning)"
+                      [attr.aria-label]="'Ta bort ' + utlysning.namn"
+                      title="Ta bort"
+                      class="inline-block p-1.5 rounded-full text-error hover:bg-surface-error">
+                      <span class="material-symbols-outlined text-[18px] align-middle">delete</span>
+                    </button>
+                  }
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="9" class="px-6 py-12 text-center">
+                <td [attr.colspan]="nyVariant ? 10 : 9" class="px-6 py-12 text-center">
                   <span class="material-symbols-outlined text-[40px] text-text-subtle">search_off</span>
                   <p class="text-sm text-text-secondary mt-2">Inga utlysningar matchar sökningen eller den valda filtreringen.</p>
                   <button
@@ -513,3 +544,30 @@
     </div>
   </div>
 </div>
+
+<!-- Bekräfta borttagning (Utlysningar (NY)) -->
+@if (raderaKandidat(); as u) {
+  <div class="fixed inset-0 z-[1040] bg-black/40" (click)="raderaKandidat.set(null)" aria-hidden="true"></div>
+  <div class="fixed inset-0 z-[1050] flex items-center justify-center p-6 pointer-events-none">
+    <div class="pointer-events-auto w-full max-w-[480px] bg-surface border border-border shadow-2xl" role="alertdialog" aria-modal="true" aria-labelledby="radera-rubrik">
+      <div class="px-6 py-4 border-b border-border-muted">
+        <h2 id="radera-rubrik" class="text-lg font-semibold text-text">Ta bort utlysning?</h2>
+      </div>
+      <div class="px-6 py-5">
+        <p class="text-sm text-text">
+          <span class="font-semibold">{{ u.namn }}</span> ({{ u.organisation }}) tas bort permanent från listan.
+        </p>
+        <p class="text-[13px] text-text-muted mt-2">Åtgärden kan inte ångras i prototypen.</p>
+      </div>
+      <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-border-muted">
+        <button type="button" (click)="raderaKandidat.set(null)"
+          class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">Avbryt</button>
+        <button type="button" (click)="bekraftaRadera()"
+          class="flex items-center gap-1.5 px-4 py-2 text-sm bg-error text-on-error hover:bg-error-hover transition-colors">
+          <span class="material-symbols-outlined text-[18px]">delete</span>
+          Ta bort
+        </button>
+      </div>
+    </div>
+  </div>
+}

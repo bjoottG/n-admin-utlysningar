@@ -12,6 +12,8 @@ import {
 import { ToppmenyComponent } from '../delade/toppmeny.component';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import { FinansieringsmedelModalComponent } from '../delade/finansieringsmedel-modal.component';
+import { FinansieringModalComponent } from '../delade/finansiering-modal.component';
+import { Finansiering, FinansieringService } from '../finansiering/finansiering.service';
 
 interface Steg {
   nr: number;
@@ -22,13 +24,19 @@ const NYTT_INTERNT_NAMN = '__nytt__';
 
 @Component({
   selector: 'app-skapa-utlysning',
-  imports: [FormsModule, RouterLink, ToppmenyComponent, DatumValjareComponent, FinansieringsmedelModalComponent],
+  imports: [FormsModule, RouterLink, ToppmenyComponent, DatumValjareComponent, FinansieringsmedelModalComponent, FinansieringModalComponent],
   templateUrl: './skapa-utlysning.component.html',
 })
 export class SkapaUtlysningComponent {
   private readonly service = inject(UtlysningService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly finansieringService = inject(FinansieringService);
+
+  /** Utlysningar (NY): finansieringsmedel ersatt av Finansiering. */
+  readonly nyVariant = this.route.snapshot.data['variant'] === 'ny';
+  readonly bas = this.nyVariant ? '/utlysningar-ny' : '/utlysningar';
+  readonly listNamn = this.nyVariant ? 'Utlysningar (NY)' : 'Utlysningar';
 
   readonly stegLista: Steg[] = [
     { nr: 1, titel: 'Organisation' },
@@ -42,6 +50,7 @@ export class SkapaUtlysningComponent {
   readonly diarieSystemLista = this.service.hamtaDiarieSystem();
   readonly sprakLista = this.service.hamtaSprak();
   readonly visaFinansieringsmedelModal = signal(false);
+  readonly visaFinansieringModal = signal(false);
 
   readonly steg = signal(1);
 
@@ -95,6 +104,7 @@ export class SkapaUtlysningComponent {
   /** Vid Nej: datum då man inte längre kan skapa ärenden i Nyps (tomt = tills vidare). */
   readonly nypsStangDatum = signal('');
   readonly finansieringsmedel = signal<string[]>([]);
+  readonly finansieringar = signal<number[]>([]);
   readonly utlysningstext = signal('');
   readonly fordjupandeBeskrivning = signal('');
 
@@ -122,7 +132,11 @@ export class SkapaUtlysningComponent {
     } else if (!this.tillsvidare() && !this.nypsStangDatum()) {
       fel.push('Ange datum för när utlysningen stängs i Nyps eller kryssa i Tillsvidare');
     }
-    if (!this.harFinansieringsmedel()) fel.push('Lägg till minst ett finansieringsmedel');
+    if (this.nyVariant) {
+      if (this.finansieringar().length === 0) fel.push('Lägg till minst en finansiering');
+    } else if (!this.harFinansieringsmedel()) {
+      fel.push('Lägg till minst ett finansieringsmedel');
+    }
     return fel;
   });
 
@@ -152,6 +166,7 @@ export class SkapaUtlysningComponent {
       this.interntNamn.set(kalla.interntNamn);
       this.sprak.set(kalla.sprak ?? '');
       this.finansieringsmedel.set([...(kalla.finansieringsmedel ?? [])]);
+      this.finansieringar.set([...(kalla.finansieringar ?? [])]);
       this.utlysningstext.set(kalla.utlysningstext ?? '');
       this.fordjupandeBeskrivning.set(kalla.fordjupandeBeskrivning ?? '');
       this.oppenIMa.set(kalla.ejOppenIMa ? 'nej' : 'ja');
@@ -200,6 +215,23 @@ export class SkapaUtlysningComponent {
 
   postFor(etikett: string): FinansieringsmedelPost | undefined {
     return this.service.hamtaFinansieringsmedelPost(etikett);
+  }
+
+  hanteraFinansieringVal(nyaVal: number[]): void {
+    this.finansieringar.set(nyaVal);
+    this.visaFinansieringModal.set(false);
+  }
+
+  taBortFinansiering(index: number): void {
+    this.finansieringar.update((ids) => ids.filter((_, i) => i !== index));
+  }
+
+  finansieringFor(id: number): Finansiering | undefined {
+    return this.finansieringService.hamtaFinansiering(id);
+  }
+
+  finansieringSammanfattning(fin: Finansiering): string {
+    return this.finansieringService.sammanfattning(fin);
   }
 
   nivaKlass(niva: InformationstextNiva): string {
@@ -256,9 +288,10 @@ export class SkapaUtlysningComponent {
       diarienummer: this.diarienummer(),
       diarieSystem: this.diarieSystem(),
       finansieringsmedel: this.finansieringsmedel(),
+      finansieringar: this.finansieringar(),
       utlysningstext: this.utlysningstext(),
       fordjupandeBeskrivning: this.fordjupandeBeskrivning(),
     });
-    this.router.navigate(['/utlysningar', skapad.id]);
+    this.router.navigate([this.bas, skapad.id]);
   }
 }

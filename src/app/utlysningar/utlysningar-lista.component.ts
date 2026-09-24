@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ETIKETT_INFO,
   STATUS_INFO,
@@ -12,6 +12,7 @@ import {
 } from '../utlysning.service';
 import { ToppmenyComponent } from '../delade/toppmeny.component';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
+import { FinansieringService } from '../finansiering/finansiering.service';
 
 type SortKolumn = 'skapad' | 'startdatum' | 'slutdatum';
 type FilterSektion = 'organisation' | 'stodform' | 'status' | 'etikett' | 'skapad' | 'slutdatum';
@@ -30,10 +31,20 @@ interface AktivtFilter {
 export class UtlysningarListaComponent {
   private readonly service = inject(UtlysningService);
   private readonly elementRef = inject(ElementRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly finansieringService = inject(FinansieringService);
+
+  /** Utlysningar (NY): finansieringsmedel ersatt av Finansiering, samt möjlighet att ta bort. */
+  readonly nyVariant = this.route.snapshot.data['variant'] === 'ny';
+  readonly bas = this.nyVariant ? '/utlysningar-ny' : '/utlysningar';
+  readonly sidtitel = this.nyVariant ? 'Utlysningar (NY)' : 'Utlysningar';
+
+  /** Utlysning som väntar på bekräftelse att tas bort. */
+  readonly raderaKandidat = signal<Utlysning | null>(null);
 
   readonly statusInfo = STATUS_INFO;
   readonly etikettInfo = ETIKETT_INFO;
-  readonly alla = this.service.hamtaAlla();
+  readonly alla = signal([...this.service.hamtaAlla()]);
   readonly organisationer = this.service.hamtaOrganisationer();
   readonly sidstorlekar = [10, 25, 50];
 
@@ -68,7 +79,7 @@ export class UtlysningarListaComponent {
 
   readonly antalPerOrganisation = computed(() => {
     const antal = new Map<string, number>();
-    for (const u of this.alla) {
+    for (const u of this.alla()) {
       antal.set(u.organisation, (antal.get(u.organisation) ?? 0) + 1);
     }
     return antal;
@@ -78,7 +89,7 @@ export class UtlysningarListaComponent {
   readonly valbaraStodformNivaer = computed(() => {
     const vald = this.valdStodformVag();
     const nivaer = new Set<string>();
-    for (const u of this.alla) {
+    for (const u of this.alla()) {
       const delar = u.stodform.split(' > ');
       if (vald.length >= delar.length) continue;
       if (vald.every((niva, i) => delar[i] === niva)) {
@@ -90,7 +101,7 @@ export class UtlysningarListaComponent {
 
   readonly antalPerStatus = computed(() => {
     const antal = new Map<UtlysningStatus, number>();
-    for (const u of this.alla) {
+    for (const u of this.alla()) {
       const s = this.service.status(u);
       antal.set(s, (antal.get(s) ?? 0) + 1);
     }
@@ -99,7 +110,7 @@ export class UtlysningarListaComponent {
 
   readonly antalPerEtikett = computed(() => {
     const antal = new Map<UtlysningEtikett, number>();
-    for (const u of this.alla) {
+    for (const u of this.alla()) {
       const e = this.service.etikett(u);
       if (e) antal.set(e, (antal.get(e) ?? 0) + 1);
     }
@@ -117,7 +128,7 @@ export class UtlysningarListaComponent {
     const slutFran = this.slutFran();
     const slutTill = this.slutTill();
 
-    return this.alla.filter((u) => {
+    return this.alla().filter((u) => {
       if (
         fritext &&
         ![u.namn, u.interntNamn, u.stodform, u.organisation].some((falt) =>
@@ -404,5 +415,22 @@ export class UtlysningarListaComponent {
 
   etikettFor(utlysning: Utlysning): UtlysningEtikett | null {
     return this.service.etikett(utlysning);
+  }
+
+  /* ---------- Utlysningar (NY) ---------- */
+
+  finansieringNamn(utlysning: Utlysning): string[] {
+    return (utlysning.finansieringar ?? [])
+      .map((id) => this.finansieringService.hamtaFinansiering(id)?.namn)
+      .filter((namn): namn is string => !!namn);
+  }
+
+  bekraftaRadera(): void {
+    const u = this.raderaKandidat();
+    if (!u) return;
+    this.service.taBort(u.id);
+    this.alla.set([...this.service.hamtaAlla()]);
+    this.raderaKandidat.set(null);
+    if (this.sida() > this.antalSidor()) this.sida.set(Math.max(1, this.antalSidor()));
   }
 }

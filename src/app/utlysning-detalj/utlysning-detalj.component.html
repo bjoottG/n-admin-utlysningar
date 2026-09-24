@@ -6,7 +6,7 @@
   <nav class="flex items-center gap-1 px-6 py-2.5" aria-label="Brödsmulor">
     <a routerLink="/" class="text-[15px] text-interactive hover:underline cursor-pointer">Startsida</a>
     <span class="text-[15px] text-text-muted mx-0.5">/</span>
-    <a routerLink="/utlysningar" class="text-[15px] text-interactive hover:underline cursor-pointer">Utlysningar</a>
+    <a [routerLink]="bas" class="text-[15px] text-interactive hover:underline cursor-pointer">{{ listNamn }}</a>
     <span class="text-[15px] text-text-muted mx-0.5">/</span>
     <span class="text-[15px] text-text">{{ utlysning()?.namn }}</span>
   </nav>
@@ -33,11 +33,18 @@
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <a routerLink="/utlysningar" class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">
+          <a [routerLink]="bas" class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">
             Tillbaka till listan
           </a>
+          @if (nyVariant) {
+            <button type="button" (click)="visaRaderaDialog.set(true)"
+              class="flex items-center gap-1.5 px-4 py-2 text-sm border border-border-error text-error hover:bg-surface-error transition-colors">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+              Ta bort
+            </button>
+          }
           <a
-            routerLink="/utlysningar/ny"
+            [routerLink]="bas + '/ny'"
             [queryParams]="{ kopieraFran: u.id }"
             class="flex items-center gap-1.5 px-4 py-2 text-sm transition-colors"
             [class.bg-primary]="framhevKopiera()"
@@ -288,6 +295,7 @@
             </div>
           </section>
 
+          @if (!nyVariant) {
           <!-- Finansieringsmedel -->
           <section class="bg-surface border border-border">
             <div class="flex items-center justify-between gap-4 px-5 py-3 border-b border-border-muted">
@@ -321,6 +329,53 @@
               <p class="text-[13px] text-text-muted py-2">Minst ett finansieringsmedel måste alltid finnas kvar i utlysningen.</p>
             </div>
           </section>
+          } @else {
+            <!-- Finansiering (ersätter finansieringsmedel i Utlysningar (NY)) -->
+            <section class="bg-surface border border-border">
+              <div class="flex items-center justify-between gap-4 px-5 py-3 border-b border-border-muted">
+                <div>
+                  <h2 class="text-base font-semibold text-text">Finansiering</h2>
+                  <p class="text-[13px] text-text-muted mt-0.5">Ersätter finansieringsmedel – hämtas från administrationsområdet Finansiering.</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="visaFinansieringModal.set(true)"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-primary text-primary hover:bg-surface-primary transition-colors shrink-0">
+                  <span class="material-symbols-outlined text-[18px]">add</span>
+                  Lägg till
+                </button>
+              </div>
+              <div class="px-5 py-1">
+                @for (id of finansieringar(); track id) {
+                  <div class="flex items-center justify-between gap-3 py-2.5 border-b border-border-muted last:border-b-0">
+                    <div>
+                      @if (finansieringFor(id); as fin) {
+                        <p class="text-sm font-semibold text-text">{{ fin.namn }}</p>
+                        <p class="text-xs text-text-muted mt-0.5">{{ finansieringSammanfattning(fin) }}</p>
+                      } @else {
+                        <p class="text-sm text-text">Finansiering #{{ id }}</p>
+                      }
+                    </div>
+                    <button
+                      type="button"
+                      (click)="taBortFinansiering($index)"
+                      [disabled]="finansieringar().length <= 1"
+                      [title]="finansieringar().length <= 1 ? 'Minst en finansiering krävs' : 'Ta bort finansiering'"
+                      [attr.aria-label]="'Ta bort finansiering ' + (finansieringFor(id)?.namn ?? id)"
+                      class="p-1.5 rounded-full text-interactive hover:bg-component-hover disabled:rounded-full shrink-0">
+                      <span class="material-symbols-outlined text-[18px] align-middle">delete</span>
+                    </button>
+                  </div>
+                }
+                @if (visaValidering() && finansieringar().length === 0) {
+                  <p class="flex items-center gap-1.5 py-2.5 text-sm text-error">
+                    <span class="material-symbols-outlined text-[18px]">error</span>
+                    Det krävs minst en finansiering
+                  </p>
+                }
+              </div>
+            </section>
+          }
 
           <!-- Serie -->
           @if (serie().length > 1) {
@@ -337,7 +392,7 @@
                       @if (omgang.id === u.id) {
                         <span class="text-sm font-semibold text-text">{{ omgang.namn }} <span class="font-normal text-text-muted">(denna utlysning)</span></span>
                       } @else {
-                        <a [routerLink]="['/utlysningar', omgang.id]" class="text-sm font-semibold text-interactive hover:underline">{{ omgang.namn }}</a>
+                        <a [routerLink]="[bas, omgang.id]" class="text-sm font-semibold text-interactive hover:underline">{{ omgang.namn }}</a>
                       }
                       <p class="text-xs text-text-muted mt-0.5">{{ omgang.startdatum }} till {{ omgang.tillsvidare ? 'tillsvidare' : omgang.slutdatum }}</p>
                     </div>
@@ -384,6 +439,36 @@
         [kravMinstEtt]="true"
         (stang)="visaFinansieringsmedelModal.set(false)"
         (bekrafta)="hanteraFinansieringsmedelVal($event)" />
+    }
+    @if (visaFinansieringModal()) {
+      <app-finansiering-modal
+        [valda]="finansieringar()"
+        [kravMinstEtt]="true"
+        (stang)="visaFinansieringModal.set(false)"
+        (bekrafta)="hanteraFinansieringVal($event)" />
+    }
+    @if (visaRaderaDialog()) {
+      <div class="fixed inset-0 z-[1040] bg-black/40" (click)="visaRaderaDialog.set(false)" aria-hidden="true"></div>
+      <div class="fixed inset-0 z-[1050] flex items-center justify-center p-6 pointer-events-none">
+        <div class="pointer-events-auto w-full max-w-[480px] bg-surface border border-border shadow-2xl" role="alertdialog" aria-modal="true" aria-labelledby="radera-rubrik">
+          <div class="px-6 py-4 border-b border-border-muted">
+            <h2 id="radera-rubrik" class="text-lg font-semibold text-text">Ta bort utlysning?</h2>
+          </div>
+          <div class="px-6 py-5">
+            <p class="text-sm text-text"><span class="font-semibold">{{ u.namn }}</span> ({{ u.organisation }}) tas bort permanent.</p>
+            <p class="text-[13px] text-text-muted mt-2">Åtgärden kan inte ångras i prototypen.</p>
+          </div>
+          <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-border-muted">
+            <button type="button" (click)="visaRaderaDialog.set(false)"
+              class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">Avbryt</button>
+            <button type="button" (click)="bekraftaRadera()"
+              class="flex items-center gap-1.5 px-4 py-2 text-sm bg-error text-on-error hover:bg-error-hover transition-colors">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+              Ta bort
+            </button>
+          </div>
+        </div>
+      </div>
     }
   }
 </div>

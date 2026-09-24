@@ -15,18 +15,27 @@ import {
 import { ToppmenyComponent } from '../delade/toppmeny.component';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import { FinansieringsmedelModalComponent } from '../delade/finansieringsmedel-modal.component';
+import { FinansieringModalComponent } from '../delade/finansiering-modal.component';
+import { Finansiering, FinansieringService } from '../finansiering/finansiering.service';
 
 const NYTT_INTERNT_NAMN = '__nytt__';
 
 @Component({
   selector: 'app-utlysning-detalj',
-  imports: [FormsModule, RouterLink, ToppmenyComponent, DatumValjareComponent, FinansieringsmedelModalComponent],
+  imports: [FormsModule, RouterLink, ToppmenyComponent, DatumValjareComponent, FinansieringsmedelModalComponent, FinansieringModalComponent],
   templateUrl: './utlysning-detalj.component.html',
 })
 export class UtlysningDetaljComponent {
   private readonly service = inject(UtlysningService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly finansieringService = inject(FinansieringService);
+
+  /** Utlysningar (NY): finansieringsmedel ersatt av Finansiering, samt möjlighet att ta bort. */
+  readonly nyVariant = this.route.snapshot.data['variant'] === 'ny';
+  readonly bas = this.nyVariant ? '/utlysningar-ny' : '/utlysningar';
+  readonly listNamn = this.nyVariant ? 'Utlysningar (NY)' : 'Utlysningar';
+  readonly visaRaderaDialog = signal(false);
 
   readonly statusInfo = STATUS_INFO;
   readonly etikettInfo = ETIKETT_INFO;
@@ -34,6 +43,7 @@ export class UtlysningDetaljComponent {
   readonly diarieSystemLista = this.service.hamtaDiarieSystem();
   readonly sprakLista = this.service.hamtaSprak();
   readonly visaFinansieringsmedelModal = signal(false);
+  readonly visaFinansieringModal = signal(false);
 
   readonly utlysning = signal<Utlysning | null>(null);
 
@@ -58,6 +68,7 @@ export class UtlysningDetaljComponent {
   readonly utlysningstext = signal('');
   readonly fordjupandeBeskrivning = signal('');
   readonly finansieringsmedel = signal<string[]>([]);
+  readonly finansieringar = signal<number[]>([]);
   readonly sparadNyss = signal(false);
 
   /** Visas när man försökt spara utan att alla obligatoriska fält är ifyllda. */
@@ -97,7 +108,11 @@ export class UtlysningDetaljComponent {
     } else if (!this.tillsvidare() && !this.nypsStangDatum()) {
       fel.push('Ange datum för när utlysningen stängs i Nyps eller kryssa i Tillsvidare');
     }
-    if (this.finansieringsmedel().length === 0) fel.push('Lägg till minst ett finansieringsmedel');
+    if (this.nyVariant) {
+      if (this.finansieringar().length === 0) fel.push('Lägg till minst en finansiering');
+    } else if (this.finansieringsmedel().length === 0) {
+      fel.push('Lägg till minst ett finansieringsmedel');
+    }
     return fel;
   });
 
@@ -108,7 +123,7 @@ export class UtlysningDetaljComponent {
       const id = Number(params.get('id'));
       const utlysning = Number.isFinite(id) ? this.service.hamtaUtlysning(id) : undefined;
       if (!utlysning) {
-        this.router.navigate(['/utlysningar']);
+        this.router.navigate([this.bas]);
         return;
       }
       this.ladda(utlysning);
@@ -134,6 +149,7 @@ export class UtlysningDetaljComponent {
     this.utlysningstext.set(utlysning.utlysningstext ?? '');
     this.fordjupandeBeskrivning.set(utlysning.fordjupandeBeskrivning ?? '');
     this.finansieringsmedel.set([...(utlysning.finansieringsmedel ?? [])]);
+    this.finansieringar.set([...(utlysning.finansieringar ?? [])]);
     this.sparadNyss.set(false);
     this.visaValidering.set(false);
     this.laddaTexter(utlysning);
@@ -174,6 +190,7 @@ export class UtlysningDetaljComponent {
       utlysningstext: this.utlysningstext(),
       fordjupandeBeskrivning: this.fordjupandeBeskrivning(),
       finansieringsmedel: this.finansieringsmedel(),
+      finansieringar: this.finansieringar(),
     });
     this.ladda(this.service.hamtaUtlysning(u.id)!);
     this.sparadNyss.set(true);
@@ -214,6 +231,33 @@ export class UtlysningDetaljComponent {
 
   postFor(etikett: string): FinansieringsmedelPost | undefined {
     return this.service.hamtaFinansieringsmedelPost(etikett);
+  }
+
+  hanteraFinansieringVal(nyaVal: number[]): void {
+    this.finansieringar.set(nyaVal);
+    this.visaFinansieringModal.set(false);
+  }
+
+  taBortFinansiering(index: number): void {
+    if (this.finansieringar().length <= 1) return;
+    this.finansieringar.update((ids) => ids.filter((_, i) => i !== index));
+  }
+
+  finansieringFor(id: number): Finansiering | undefined {
+    return this.finansieringService.hamtaFinansiering(id);
+  }
+
+  finansieringSammanfattning(fin: Finansiering): string {
+    return this.finansieringService.sammanfattning(fin);
+  }
+
+  /** Utlysningar (NY): tar bort utlysningen och går tillbaka till listan. */
+  bekraftaRadera(): void {
+    const u = this.utlysning();
+    if (!u) return;
+    this.service.taBort(u.id);
+    this.visaRaderaDialog.set(false);
+    this.router.navigate([this.bas]);
   }
 
   nivaKlass(niva: InformationstextNiva): string {

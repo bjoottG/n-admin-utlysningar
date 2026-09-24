@@ -45,6 +45,11 @@ Idag måste handläggaren först söka upp en organisation för att överhuvudta
   - **Kontering** – Finanskod, Kostnadsställe, Verksamhetskod (fritext, minst ett fält).
 - Värdeförråden (organisationer, utgiftsområden, anslag, anslagsposter) och mockdata ligger i `src/app/finansiering/finansiering.service.ts`.
 
+## Utlysningar (NY) (2026-09-24)
+
+- `/utlysningar-ny` visar samma utlysningar som `/utlysningar` men i en ny variant: valet av **finansieringsmedel** är ersatt av **Finansiering** (från administrationsområdet Finansiering) i guiden och detaljvyn, listan har en kolumn Finansiering och utlysningar kan **tas bort** (papperskorg per rad samt knapp i detaljvyn, med bekräftelse).
+- Tekniskt återanvänds list-, guide- och detaljkomponenterna via route-data `variant: 'ny'`; länkar, brödsmulor och validering följer varianten. Utlysningen har fältet `finansieringar` (id:n) vid sidan av `finansieringsmedel`.
+
 ## Kom igång
 
 ```bash

@@ -32,6 +32,12 @@ const OMRADEN: Omrade[] = [
     lank: '/utlysningar',
   },
   {
+    titel: 'Utlysningar (NY)',
+    beskrivning:
+      'Ny version av utlysningslistan där finansieringsmedel ersatts av Finansiering. Utlysningar kan läggas till, redigeras och tas bort.',
+    lank: '/utlysningar-ny',
+  },
+  {
     titel: 'Informationstexter',
     beskrivning:
       'Här hanteras informationstexter som presenteras i Min ansökan, på organisationsnivå, stödform eller utlysning.',

@@ -70,6 +70,8 @@ export interface Utlysning {
   diarieSystem?: string;
   startstodformsnod?: string;
   finansieringsmedel?: string[];
+  /** Finansieringar (id:n) från administrationsområdet Finansiering – används i Utlysningar (NY). */
+  finansieringar?: number[];
   utlysningstext?: string;
   fordjupandeBeskrivning?: string;
 }
@@ -97,27 +99,27 @@ const SMART_EUROPA =
   'Ett mer konkurrenskraftigt och smart Europa genom främjande av innovativ och smart ekonomisk omvandling och regional IKT-konnektivitet';
 
 const UTLYSNINGAR: Utlysning[] = [
-  { id: 24, namn: 'Grön omställning i industrin hösten 2026', interntNamn: 'GRÖN-H26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Östra Mellansverige > ${GRONARE_EUROPA} > Ett grönare och koldioxidsnålare Östra Mellansverige`, skapad: '2026-09-02', startdatum: '2026-09-15', slutdatum: '2026-11-30' },
-  { id: 23, namn: 'Digitaliseringscheckar för småföretag', interntNamn: 'DIGI-26', organisation: 'Region Skåne', stodform: 'Företagsstöd > Konsultcheck > Digitalisering', skapad: '2026-08-28', startdatum: '2026-09-01', slutdatum: '2026-10-15' },
-  { id: 22, namn: 'Investeringsstöd för landsbygdsföretag', interntNamn: 'INV-LAND-26', organisation: 'Region Norrbotten', stodform: 'Företagsstöd > Regionalt investeringsstöd', skapad: '2026-08-20', startdatum: '2026-08-20', slutdatum: '2026-09-22' },
+  { id: 24, namn: 'Grön omställning i industrin hösten 2026', interntNamn: 'GRÖN-H26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Östra Mellansverige > ${GRONARE_EUROPA} > Ett grönare och koldioxidsnålare Östra Mellansverige`, skapad: '2026-09-02', startdatum: '2026-09-15', slutdatum: '2026-11-30', finansieringar: [1] },
+  { id: 23, namn: 'Digitaliseringscheckar för småföretag', interntNamn: 'DIGI-26', organisation: 'Region Skåne', stodform: 'Företagsstöd > Konsultcheck > Digitalisering', skapad: '2026-08-28', startdatum: '2026-09-01', slutdatum: '2026-10-15', finansieringar: [4] },
+  { id: 22, namn: 'Investeringsstöd för landsbygdsföretag', interntNamn: 'INV-LAND-26', organisation: 'Region Norrbotten', stodform: 'Företagsstöd > Regionalt investeringsstöd', skapad: '2026-08-20', startdatum: '2026-08-20', slutdatum: '2026-09-22', finansieringar: [2] },
   { id: 21, namn: 'Stöd till kommersiell service i glesbygd', interntNamn: 'KOMSERV', organisation: 'Region Jämtland Härjedalen', stodform: 'Företagsstöd > Kommersiell service > Stöd till dagligvarubutiker i gles- och landsbygd', skapad: '2026-08-20', startdatum: '2026-08-20', slutdatum: '2026-09-22' },
-  { id: 20, namn: 'Innovationsprojekt inom livsmedelskedjan', interntNamn: 'LIVS-INNO-26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Nationella regionalfondsprogrammet > ${SMART_EUROPA} > Innovation i livsmedelskedjan`, skapad: '2026-08-13', startdatum: '2026-08-13', slutdatum: '2026-09-16' },
+  { id: 20, namn: 'Innovationsprojekt inom livsmedelskedjan', interntNamn: 'LIVS-INNO-26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Nationella regionalfondsprogrammet > ${SMART_EUROPA} > Innovation i livsmedelskedjan`, skapad: '2026-08-13', startdatum: '2026-08-13', slutdatum: '2026-09-16', finansieringar: [1, 2] },
   { id: 19, namn: 'Energieffektivisering i besöksnäringen', interntNamn: 'ENERGI-BES-26', organisation: 'Region Gotland', stodform: 'Företagsstöd > Miljöinvestering > Energieffektivisering', skapad: '2026-07-30', startdatum: '2026-08-01', slutdatum: '2026-12-31', ejOppenIMa: true },
   { id: 18, namn: 'Såddfinansiering för tech-startups', interntNamn: 'SÅDD-26', organisation: 'Västra Götalandsregionen', stodform: 'Företagsstöd > Såddfinansiering', skapad: '2026-07-14', startdatum: '2026-08-01', slutdatum: '2026-10-01' },
-  { id: 17, namn: 'Förstudier inför ERUF-ansökningar 2027', interntNamn: 'ERUF-FÖR-27', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Övre Norrland > ${SMART_EUROPA} > Stärka forskning och innovation`, skapad: '2026-06-25', startdatum: '2026-07-01', slutdatum: '2026-08-31' },
+  { id: 17, namn: 'Förstudier inför ERUF-ansökningar 2027', interntNamn: 'ERUF-FÖR-27', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Övre Norrland > ${SMART_EUROPA} > Stärka forskning och innovation`, skapad: '2026-06-25', startdatum: '2026-07-01', slutdatum: '2026-08-31', finansieringar: [1] },
   { id: 16, namn: 'Kompetensutveckling i vård- och omsorgsföretag', interntNamn: 'KOMP-VÅRD-26', organisation: 'Region Kalmar län', stodform: 'Projektmedel > Kompetensförsörjning > Vård och omsorg', skapad: '2026-06-10', startdatum: '2026-06-15', slutdatum: '2026-08-15' },
   { id: 15, namn: 'Exportfrämjande insatser för tillverkningsindustrin', interntNamn: 'EXPORT-26', organisation: 'Region Värmland', stodform: 'Företagsstöd > Internationalisering > Exportfrämjande', skapad: '2026-05-28', startdatum: '2026-06-01', slutdatum: '2026-09-30' },
   { id: 14, namn: 'Cirkulära affärsmodeller i byggsektorn', interntNamn: 'CIRK-BYGG-26', organisation: 'Västra Götalandsregionen', stodform: 'Projektmedel > Regionala utvecklingsmedel > Cirkulär ekonomi', skapad: '2026-05-15', startdatum: '2026-05-20', slutdatum: '2026-11-15' },
-  { id: 13, namn: 'Bredbandsutbyggnad i Norrlands inland', interntNamn: 'BREDBAND-26', organisation: 'Region Västerbotten', stodform: 'Projektmedel > Bredbandsstöd', skapad: '2026-04-22', startdatum: '2026-05-01', slutdatum: '2026-10-31' },
+  { id: 13, namn: 'Bredbandsutbyggnad i Norrlands inland', interntNamn: 'BREDBAND-26', organisation: 'Region Västerbotten', stodform: 'Projektmedel > Bredbandsstöd', skapad: '2026-04-22', startdatum: '2026-05-01', slutdatum: '2026-10-31', finansieringar: [2] },
   { id: 12, namn: 'Besöksnäring och kulturmiljöer i Dalarna', interntNamn: 'KULTUR-BES-26', organisation: 'Region Dalarna', stodform: 'Projektmedel > Regionala utvecklingsmedel > Besöksnäring och kulturmiljöer', skapad: '2026-04-08', startdatum: '2026-04-15', slutdatum: '2026-06-30', stangdIAdmin: true },
-  { id: 11, namn: 'AI-tillämpningar i offentlig sektor', interntNamn: 'AI-OFF-26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Nationella regionalfondsprogrammet > ${SMART_EUROPA} > Stärka innovations- och utvecklingskapaciteten samt lärandet i och mellan städer`, skapad: '2026-03-25', startdatum: '2026-04-01', slutdatum: '2026-12-15' },
-  { id: 10, namn: 'Riktat omställningsstöd efter varsel', interntNamn: 'OMSTÄLL-26', organisation: 'Region Norrbotten', stodform: 'Företagsstöd > Omställningsstöd', skapad: '2026-03-12', startdatum: '2026-03-12', slutdatum: '2026-09-12' },
+  { id: 11, namn: 'AI-tillämpningar i offentlig sektor', interntNamn: 'AI-OFF-26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Nationella regionalfondsprogrammet > ${SMART_EUROPA} > Stärka innovations- och utvecklingskapaciteten samt lärandet i och mellan städer`, skapad: '2026-03-25', startdatum: '2026-04-01', slutdatum: '2026-12-15', finansieringar: [1] },
+  { id: 10, namn: 'Riktat omställningsstöd efter varsel', interntNamn: 'OMSTÄLL-26', organisation: 'Region Norrbotten', stodform: 'Företagsstöd > Omställningsstöd', skapad: '2026-03-12', startdatum: '2026-03-12', slutdatum: '2026-09-12', finansieringar: [2] },
   { id: 9, namn: 'Hållbar vattenanvändning i lantbruket', interntNamn: 'VATTEN-26', organisation: 'Region Kalmar län', stodform: 'Företagsstöd > Miljöinvestering > Hållbar vattenanvändning', skapad: '2026-02-18', startdatum: '2026-03-01', slutdatum: '2026-05-31', stangdIAdmin: true },
   { id: 8, namn: 'Filminspelning och kreativa näringar', interntNamn: 'FILM-26', organisation: 'Region Skåne', stodform: 'Projektmedel > Kulturella och kreativa näringar > Film', skapad: '2026-02-05', startdatum: '2026-02-15', slutdatum: '2026-10-30' },
-  { id: 7, namn: 'Elektrifiering av tunga transporter', interntNamn: 'ELTRANSPORT-26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Nationella regionalfondsprogrammet > ${GRONARE_EUROPA} > Hållbar mobilitet i städer`, skapad: '2026-01-20', startdatum: '2026-02-01', slutdatum: '2026-08-01' },
+  { id: 7, namn: 'Elektrifiering av tunga transporter', interntNamn: 'ELTRANSPORT-26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Nationella regionalfondsprogrammet > ${GRONARE_EUROPA} > Hållbar mobilitet i städer`, skapad: '2026-01-20', startdatum: '2026-02-01', slutdatum: '2026-08-01', finansieringar: [1] },
   { id: 6, namn: 'Vinterturism och säsongsförlängning', interntNamn: 'VINTER-26', organisation: 'Region Jämtland Härjedalen', stodform: 'Företagsstöd > Regionalt investeringsstöd > Besöksnäring', skapad: '2025-12-10', startdatum: '2026-01-01', slutdatum: '2026-03-31' },
   { id: 5, namn: 'Ung företagsamhet i skärgårdskommuner', interntNamn: 'UNG-SKÄR-26', organisation: 'Region Gotland', stodform: 'Projektmedel > Regionala utvecklingsmedel > Ung företagsamhet', skapad: '2025-11-18', startdatum: '2026-01-15', slutdatum: '2026-04-15', stangdIAdmin: true },
-  { id: 4, namn: 'Smart specialisering inom skogsnäringen', interntNamn: 'SKOG-SMART-25', organisation: 'Region Västerbotten', stodform: 'Projektmedel > Regionala utvecklingsmedel > Smart specialisering', skapad: '2025-10-22', startdatum: '2025-11-01', slutdatum: '2026-11-01' },
+  { id: 4, namn: 'Smart specialisering inom skogsnäringen', interntNamn: 'SKOG-SMART-25', organisation: 'Region Västerbotten', stodform: 'Projektmedel > Regionala utvecklingsmedel > Smart specialisering', skapad: '2025-10-22', startdatum: '2025-11-01', slutdatum: '2026-11-01', finansieringar: [2] },
   { id: 3, namn: 'Kombinerad mobilitet på landsbygd', interntNamn: 'MOBIL-25', organisation: 'Region Dalarna', stodform: 'Projektmedel > Hållbara transporter > Kombinerad mobilitet', skapad: '2025-09-15', startdatum: '2025-10-01', slutdatum: '2025-12-31', stangdIAdmin: true },
   { id: 25, namn: 'Stöd till kommersiell service i glesbygd 2025', interntNamn: 'KOMSERV', organisation: 'Region Jämtland Härjedalen', stodform: 'Företagsstöd > Kommersiell service > Stöd till dagligvarubutiker i gles- och landsbygd', skapad: '2025-08-18', startdatum: '2025-08-20', slutdatum: '2025-09-22' },
   { id: 2, namn: 'Automationscheckar för industriföretag', interntNamn: 'AUTO-25', organisation: 'Region Värmland', stodform: 'Företagsstöd > Konsultcheck > Automation', skapad: '2025-08-05', startdatum: '2025-09-01', slutdatum: '2025-11-28', stangdIAdmin: true },
@@ -408,6 +410,11 @@ export class UtlysningService {
     const ny: Utlysning = { id, ...utlysning };
     UTLYSNINGAR.unshift(ny);
     return ny;
+  }
+
+  taBort(id: number): void {
+    const index = UTLYSNINGAR.findIndex((u) => u.id === id);
+    if (index >= 0) UTLYSNINGAR.splice(index, 1);
   }
 
   hamtaOrganisationer(): string[] {

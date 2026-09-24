@@ -331,4 +331,18 @@ export class FinansieringService {
   hamtaKontering(id: number | null): Kontering | undefined {
     return id === null ? undefined : this.konteringar().find((k) => k.id === id);
   }
+
+  hamtaFinansiering(id: number): Finansiering | undefined {
+    return this.finansieringar().find((f) => f.id === id);
+  }
+
+  /** Kort beskrivning av en finansiering: källa samt utbetalande/beslutande organisation. */
+  sammanfattning(fin: Finansiering): string {
+    const delar = [
+      this.hamtaKalla(fin.finansiellKallaId)?.namn,
+      fin.utbetalandeOrganisation ? `Utbetalas av ${fin.utbetalandeOrganisation}` : '',
+      fin.beslutandeOrganisation ? `Beslut ${fin.beslutandeOrganisation}` : '',
+    ].filter(Boolean);
+    return delar.length ? delar.join(' · ') : 'Källa och organisation saknas';
+  }
 }
