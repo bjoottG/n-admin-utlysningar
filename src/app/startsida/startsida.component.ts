@@ -16,6 +16,12 @@ const OMRADEN: Omrade[] = [
       'Här hanteras finansieringsmedlen som läggs till under respektive utlysning och i den ekonomiska integrationen.',
   },
   {
+    titel: 'Finansiering',
+    beskrivning:
+      'Här hanteras finansieringar samt de finansiella källor och konteringar som finansieringarna kopplas till.',
+    lank: '/finansiering',
+  },
+  {
     titel: 'Ekonomisk integration',
     beskrivning:
       'Här hanteras den ekonomiska integrationen för finansieringsmedel mellan Nyps och ekonomisystemet.',

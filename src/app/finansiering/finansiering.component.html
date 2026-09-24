@@ -1,0 +1,458 @@
+<div class="min-h-screen flex flex-col bg-surface-subtle font-sans">
+
+  <app-toppmeny />
+
+  <!-- Brödsmulor -->
+  <nav class="flex items-center gap-1 px-6 py-2.5" aria-label="Brödsmulor">
+    <a routerLink="/" class="text-[15px] text-interactive hover:underline cursor-pointer">Startsida</a>
+    <span class="text-[15px] text-text-muted mx-0.5">/</span>
+    <span class="text-[15px] text-text">Finansiering</span>
+  </nav>
+
+  <div class="flex-1 px-6 pb-10">
+
+    <!-- Sidhuvud -->
+    <div class="mb-4">
+      <h1 class="text-2xl font-semibold text-text leading-tight">Finansiering</h1>
+      <p class="text-sm text-text-secondary mt-2 max-w-[70ch]">
+        Här hanteras finansieringar samt de finansiella källor och konteringar som en finansiering
+        kopplas till. Lägg till nya rader eller redigera befintliga via pennan.
+      </p>
+    </div>
+
+    <div class="bg-surface border border-border">
+
+      <!-- Flikar -->
+      <div role="tablist" aria-label="Finansiering" class="flex items-stretch border-b border-border px-2">
+        @for (f of flikar; track f.id) {
+          <button
+            type="button"
+            role="tab"
+            [id]="'flik-' + f.id"
+            [attr.aria-selected]="flik() === f.id"
+            [attr.aria-controls]="'panel-' + f.id"
+            (click)="valjFlik(f.id)"
+            class="relative px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors outline-none focus-visible:shadow-focus"
+            [class]="flik() === f.id
+              ? 'text-text border-primary'
+              : 'text-text-secondary border-transparent hover:text-text hover:border-border-strong'">
+            {{ f.namn }}
+          </button>
+        }
+      </div>
+
+      <!-- Verktygsrad -->
+      <div class="flex items-center justify-between gap-4 flex-wrap px-6 py-4">
+        <div class="relative w-full max-w-[360px]">
+          <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[20px] text-text-muted pointer-events-none">search</span>
+          <input
+            type="text"
+            autocomplete="off"
+            [attr.aria-label]="'Sök i ' + aktivFlikNamn().toLowerCase()"
+            [placeholder]="'Sök i ' + aktivFlikNamn().toLowerCase() + ' …'"
+            [ngModel]="sok()"
+            (ngModelChange)="sok.set($event)"
+            class="w-full pl-9 pr-8 py-2 text-sm text-text border border-border bg-surface placeholder:text-text-subtle outline-none focus:border-border-focus focus:shadow-focus" />
+          @if (sok()) {
+            <button type="button" (click)="sok.set('')" aria-label="Rensa sökning"
+              class="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-text-muted hover:text-text hover:bg-component-hover">
+              <span class="material-symbols-outlined text-[18px] align-middle">close</span>
+            </button>
+          }
+        </div>
+        <button
+          type="button"
+          (click)="laggTill()"
+          class="flex items-center gap-1.5 px-4 py-2 text-sm bg-primary text-on-primary hover:bg-primary-hover transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">add</span>
+          Lägg till {{ aktivFlikNamn().toLowerCase() }}
+        </button>
+      </div>
+
+      <!-- ===================== Flik: Finansiering ===================== -->
+      @if (flik() === 'finansiering') {
+        <div id="panel-finansiering" role="tabpanel" aria-labelledby="flik-finansiering" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-y border-border text-left">
+                <th scope="col" class="pl-6 pr-4 py-2.5 font-semibold text-text">Namn</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Finansiell källa</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Utbetalande org.</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Beslutande org.</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Kontering</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Status</th>
+                <th scope="col" class="pl-4 pr-6 py-2.5 w-14"><span class="sr-only">Åtgärder</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rad of finansieringar(); track rad.id) {
+                <tr class="border-b border-border-muted odd:bg-surface-subtle hover:bg-component-hover">
+                  <td class="pl-6 pr-4 py-3 align-top">
+                    <button type="button" (click)="redigeraFinansiering(rad)" class="text-left font-medium text-interactive hover:underline">{{ rad.namn }}</button>
+                    @if (rad.beskrivning) {
+                      <p class="text-[13px] text-text-muted mt-0.5 max-w-[48ch] line-clamp-2">{{ rad.beskrivning }}</p>
+                    }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text">
+                    @if (rad.finansiellKallaId !== null) { {{ kallaNamn(rad.finansiellKallaId) }} } @else { <span class="text-text-subtle">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text whitespace-nowrap">
+                    @if (rad.utbetalandeOrganisation) {
+                      <span class="cursor-help" [title]="orgNamn(rad.utbetalandeOrganisation)">{{ rad.utbetalandeOrganisation }}</span>
+                    } @else { <span class="text-text-subtle">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text whitespace-nowrap">
+                    @if (rad.beslutandeOrganisation) {
+                      <span class="cursor-help" [title]="orgNamn(rad.beslutandeOrganisation)">{{ rad.beslutandeOrganisation }}</span>
+                    } @else { <span class="text-text-subtle">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text whitespace-nowrap font-mono text-[13px]">
+                    @if (rad.konteringId !== null) { {{ konteringNamn(rad.konteringId) }} } @else { <span class="text-text-subtle font-sans text-sm">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top">
+                    <span class="inline-block px-2 py-0.5 text-xs font-medium rounded-sm whitespace-nowrap" [class]="statusKlass(rad.status)">{{ rad.status }}</span>
+                  </td>
+                  <td class="pl-4 pr-6 py-2 align-top text-right">
+                    <button type="button" (click)="redigeraFinansiering(rad)" [attr.aria-label]="'Redigera ' + rad.namn"
+                      class="p-1.5 rounded-full text-interactive hover:bg-component-hover">
+                      <span class="material-symbols-outlined text-[20px] align-middle">edit</span>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="px-6 py-10 text-center text-sm text-text-muted">Inga finansieringar matchar ”{{ sok() }}”.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- ===================== Flik: Finansiell källa ===================== -->
+      @if (flik() === 'kalla') {
+        <div id="panel-kalla" role="tabpanel" aria-labelledby="flik-kalla" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-y border-border text-left">
+                <th scope="col" class="pl-6 pr-4 py-2.5 font-semibold text-text">Namn</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Utgiftsområde</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Anslag</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Anslagspost</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text whitespace-nowrap">Används i</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Status</th>
+                <th scope="col" class="pl-4 pr-6 py-2.5 w-14"><span class="sr-only">Åtgärder</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rad of kallor(); track rad.id) {
+                <tr class="border-b border-border-muted odd:bg-surface-subtle hover:bg-component-hover">
+                  <td class="pl-6 pr-4 py-3 align-top">
+                    <button type="button" (click)="redigeraKalla(rad)" class="text-left font-medium text-interactive hover:underline">{{ rad.namn }}</button>
+                  </td>
+                  <td class="px-4 py-3 align-top text-text">
+                    @if (rad.utgiftsomrade) { {{ uoEtikett(rad.utgiftsomrade) }} } @else { <span class="text-text-subtle">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text max-w-[32ch]">
+                    @if (rad.anslag) {
+                      <span class="font-mono text-[13px]">{{ rad.anslag }}</span>
+                      <span class="block text-[13px] text-text-muted line-clamp-2" [title]="anslagEtikett(rad.anslag)">{{ anslagEtikett(rad.anslag).slice(rad.anslag.length + 1) }}</span>
+                    } @else { <span class="text-text-subtle">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text max-w-[32ch]">
+                    @if (rad.anslagspost) {
+                      <span class="font-mono text-[13px]">{{ rad.anslagspost }}</span>
+                      <span class="block text-[13px] text-text-muted line-clamp-2" [title]="anslagspostEtikett(rad.anslagspost)">{{ anslagspostEtikett(rad.anslagspost).slice(rad.anslagspost.length + 1) }}</span>
+                    } @else { <span class="text-text-subtle">–</span> }
+                  </td>
+                  <td class="px-4 py-3 align-top text-text-secondary whitespace-nowrap">
+                    {{ anvandsIFinansieringar(rad.id) }} finansiering{{ anvandsIFinansieringar(rad.id) === 1 ? '' : 'ar' }}
+                  </td>
+                  <td class="px-4 py-3 align-top">
+                    <span class="inline-block px-2 py-0.5 text-xs font-medium rounded-sm whitespace-nowrap" [class]="statusKlass(rad.status)">{{ rad.status }}</span>
+                  </td>
+                  <td class="pl-4 pr-6 py-2 align-top text-right">
+                    <button type="button" (click)="redigeraKalla(rad)" [attr.aria-label]="'Redigera ' + rad.namn"
+                      class="p-1.5 rounded-full text-interactive hover:bg-component-hover">
+                      <span class="material-symbols-outlined text-[20px] align-middle">edit</span>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="px-6 py-10 text-center text-sm text-text-muted">Inga finansiella källor matchar ”{{ sok() }}”.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- ===================== Flik: Kontering ===================== -->
+      @if (flik() === 'kontering') {
+        <div id="panel-kontering" role="tabpanel" aria-labelledby="flik-kontering" class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-y border-border text-left">
+                <th scope="col" class="pl-6 pr-4 py-2.5 font-semibold text-text">Finanskod</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Kostnadsställe</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text">Verksamhetskod</th>
+                <th scope="col" class="px-4 py-2.5 font-semibold text-text whitespace-nowrap">Används i</th>
+                <th scope="col" class="pl-4 pr-6 py-2.5 w-14"><span class="sr-only">Åtgärder</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rad of konteringar(); track rad.id) {
+                <tr class="border-b border-border-muted odd:bg-surface-subtle hover:bg-component-hover">
+                  <td class="pl-6 pr-4 py-3 font-mono text-[13px]">
+                    <button type="button" (click)="redigeraKontering(rad)" class="font-medium text-interactive hover:underline">{{ rad.finanskod || '–' }}</button>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-[13px] text-text">@if (rad.kostnadsstalle) { {{ rad.kostnadsstalle }} } @else { <span class="text-text-subtle font-sans text-sm">–</span> }</td>
+                  <td class="px-4 py-3 font-mono text-[13px] text-text">@if (rad.verksamhetskod) { {{ rad.verksamhetskod }} } @else { <span class="text-text-subtle font-sans text-sm">–</span> }</td>
+                  <td class="px-4 py-3 text-text-secondary whitespace-nowrap">
+                    {{ konteringAnvands(rad.id) }} finansiering{{ konteringAnvands(rad.id) === 1 ? '' : 'ar' }}
+                  </td>
+                  <td class="pl-4 pr-6 py-2 text-right">
+                    <button type="button" (click)="redigeraKontering(rad)" [attr.aria-label]="'Redigera kontering ' + rad.finanskod"
+                      class="p-1.5 rounded-full text-interactive hover:bg-component-hover">
+                      <span class="material-symbols-outlined text-[20px] align-middle">edit</span>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="px-6 py-10 text-center text-sm text-text-muted">Inga konteringar matchar ”{{ sok() }}”.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- Resultaträkning -->
+      <div class="px-6 py-3 border-t border-border-muted">
+        <p class="text-sm text-text-secondary" aria-live="polite">
+          Visar <span class="font-semibold text-text">{{ antalIFlik().visade }}</span>
+          av <span class="font-semibold text-text">{{ antalIFlik().totalt }}</span>
+          {{ flik() === 'finansiering' ? 'finansieringar' : flik() === 'kalla' ? 'finansiella källor' : 'konteringar' }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Redigeringsdialog ===================== -->
+@if (dialogOppen()) {
+  <div class="fixed inset-0 z-[1040] bg-black/40" (click)="stangDialog()" aria-hidden="true"></div>
+
+  <div class="fixed inset-0 z-[1050] flex items-center justify-center p-6 pointer-events-none">
+    <form
+      (ngSubmit)="spara()"
+      novalidate
+      class="pointer-events-auto w-full max-w-[640px] max-h-[90vh] flex flex-col bg-surface border border-border shadow-2xl"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="dialogRubrik()">
+
+      <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-border-muted">
+        <h2 class="text-lg font-semibold text-text">{{ dialogRubrik() }}</h2>
+        <button type="button" (click)="stangDialog()" aria-label="Stäng"
+          class="p-1.5 rounded-full text-text-muted hover:text-text hover:bg-component-hover">
+          <span class="material-symbols-outlined text-[20px] align-middle">close</span>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+        <!-- Formulär: Finansiering -->
+        @if (finForm(); as f) {
+          <div>
+            <label for="fin-namn" class="block text-sm font-medium text-text mb-1.5">Namn <span class="text-error" aria-hidden="true">*</span></label>
+            <input id="fin-namn" type="text" autocomplete="off" [ngModel]="f.namn" (ngModelChange)="sattFin('namn', $event)" name="namn"
+              [attr.aria-invalid]="visaFel(finFel().namn) ? true : null"
+              class="w-full px-3 py-2 text-sm text-text border bg-surface outline-none focus:border-border-focus focus:shadow-focus"
+              [class]="visaFel(finFel().namn) ? 'border-border-error' : 'border-border'" />
+            @if (visaFel(finFel().namn); as fel) {
+              <p class="flex items-center gap-1 mt-1.5 text-[13px] text-error"><span class="material-symbols-outlined text-[16px]">error</span>{{ fel }}</p>
+            } @else {
+              <p class="text-[13px] text-text-muted mt-1">Måste vara unikt bland alla finansieringar.</p>
+            }
+          </div>
+
+          <div>
+            <label for="fin-beskrivning" class="block text-sm font-medium text-text mb-1.5">Beskrivning</label>
+            <textarea id="fin-beskrivning" rows="3" maxlength="500" [ngModel]="f.beskrivning" (ngModelChange)="sattFin('beskrivning', $event)" name="beskrivning"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus focus:shadow-focus resize-y"></textarea>
+            <div class="flex justify-end"><span class="text-[13px] text-text-muted">{{ f.beskrivning.length }}/500</span></div>
+          </div>
+
+          <div>
+            <label for="fin-kalla" class="block text-sm font-medium text-text mb-1.5">Finansiell källa</label>
+            <select id="fin-kalla" [ngModel]="f.finansiellKallaId" (ngModelChange)="sattFin('finansiellKallaId', $event)" name="finansiellKallaId"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus">
+              <option [ngValue]="null">– Ingen vald –</option>
+              @for (k of service.finansiellaKallor(); track k.id) {
+                <option [ngValue]="k.id">{{ k.namn }}{{ k.status === 'Inaktiv' ? ' (inaktiv)' : '' }}</option>
+              }
+            </select>
+            <p class="text-[13px] text-text-muted mt-1">Hämtas från fliken Finansiell källa.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="fin-utbetalande" class="block text-sm font-medium text-text mb-1.5">Utbetalande organisation</label>
+              <select id="fin-utbetalande" [ngModel]="f.utbetalandeOrganisation" (ngModelChange)="sattFin('utbetalandeOrganisation', $event)" name="utbetalandeOrganisation"
+                class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus">
+                <option value="">– Ingen vald –</option>
+                @for (o of organisationer; track o.kod) {
+                  <option [value]="o.kod">{{ o.kod }} {{ o.namn }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label for="fin-beslutande" class="block text-sm font-medium text-text mb-1.5">Beslutande organisation</label>
+              <select id="fin-beslutande" [ngModel]="f.beslutandeOrganisation" (ngModelChange)="sattFin('beslutandeOrganisation', $event)" name="beslutandeOrganisation"
+                class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus">
+                <option value="">– Ingen vald –</option>
+                @for (o of organisationer; track o.kod) {
+                  <option [value]="o.kod">{{ o.kod }} {{ o.namn }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="fin-kontering" class="block text-sm font-medium text-text mb-1.5">Kontering</label>
+            <select id="fin-kontering" [ngModel]="f.konteringId" (ngModelChange)="sattFin('konteringId', $event)" name="konteringId"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus font-mono">
+              <option [ngValue]="null">– Ingen vald –</option>
+              @for (k of service.konteringar(); track k.id) {
+                <option [ngValue]="k.id">{{ konteringNamn(k.id) }}</option>
+              }
+            </select>
+            <p class="text-[13px] text-text-muted mt-1">Finanskod / Kostnadsställe / Verksamhetskod – hämtas från fliken Kontering.</p>
+          </div>
+
+          <fieldset>
+            <legend class="block text-sm font-medium text-text mb-1.5">Status</legend>
+            <div class="flex items-center gap-6">
+              <label class="flex items-center gap-2 text-sm text-text cursor-pointer">
+                <input type="radio" name="fin-status" value="Aktiv" [checked]="f.status === 'Aktiv'" (change)="sattFin('status', 'Aktiv')" class="w-4 h-4 accent-primary" />
+                Aktiv
+              </label>
+              <label class="flex items-center gap-2 text-sm text-text cursor-pointer">
+                <input type="radio" name="fin-status" value="Inaktiv" [checked]="f.status === 'Inaktiv'" (change)="sattFin('status', 'Inaktiv')" class="w-4 h-4 accent-primary" />
+                Inaktiv
+              </label>
+            </div>
+          </fieldset>
+        }
+
+        <!-- Formulär: Finansiell källa -->
+        @if (kallaForm(); as f) {
+          <div>
+            <label for="kalla-namn" class="block text-sm font-medium text-text mb-1.5">Namn <span class="text-error" aria-hidden="true">*</span></label>
+            <input id="kalla-namn" type="text" autocomplete="off" [ngModel]="f.namn" (ngModelChange)="sattKallaNamn($event)" name="namn"
+              [attr.aria-invalid]="visaFel(kallaFel().namn) ? true : null"
+              class="w-full px-3 py-2 text-sm text-text border bg-surface outline-none focus:border-border-focus focus:shadow-focus"
+              [class]="visaFel(kallaFel().namn) ? 'border-border-error' : 'border-border'" />
+            @if (visaFel(kallaFel().namn); as fel) {
+              <p class="flex items-center gap-1 mt-1.5 text-[13px] text-error"><span class="material-symbols-outlined text-[16px]">error</span>{{ fel }}</p>
+            } @else {
+              <p class="text-[13px] text-text-muted mt-1">Måste vara unikt bland alla finansiella källor.</p>
+            }
+          </div>
+
+          <div>
+            <label for="kalla-uo" class="block text-sm font-medium text-text mb-1.5">Utgiftsområde</label>
+            <select id="kalla-uo" [ngModel]="f.utgiftsomrade" (ngModelChange)="sattUtgiftsomrade($event)" name="utgiftsomrade"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus">
+              <option value="">– Välj utgiftsområde –</option>
+              @for (u of utgiftsomraden; track uoNyckel(u)) {
+                <option [value]="uoNyckel(u)">{{ u.kod }} {{ u.namn }}</option>
+              }
+            </select>
+            <p class="text-[13px] text-text-muted mt-1">Välj utgiftsområde först – det avgör vilka anslag som kan väljas.</p>
+          </div>
+
+          <div>
+            <label for="kalla-anslag" class="block text-sm font-medium text-text mb-1.5">Anslag</label>
+            <select id="kalla-anslag" [ngModel]="f.anslag" (ngModelChange)="sattAnslag($event)" name="anslag"
+              [disabled]="!f.utgiftsomrade"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus disabled:bg-disabled-bg disabled:text-disabled-text disabled:cursor-not-allowed">
+              <option value="">{{ f.utgiftsomrade ? '– Välj anslag –' : 'Välj utgiftsområde först' }}</option>
+              @for (a of valbaraAnslag(); track a.kod) {
+                <option [value]="a.kod">{{ a.kod }} {{ a.namn }}</option>
+              }
+            </select>
+            @if (f.utgiftsomrade) {
+              <p class="text-[13px] text-text-muted mt-1">
+                Visar {{ valbaraAnslag().length }} anslag inom utgiftsområde {{ uoEtikett(f.utgiftsomrade).split(' ')[0] }}.
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="kalla-post" class="block text-sm font-medium text-text mb-1.5">Anslagspost</label>
+            <select id="kalla-post" [ngModel]="f.anslagspost" (ngModelChange)="sattAnslagspost($event)" name="anslagspost"
+              [disabled]="!f.anslag"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus disabled:bg-disabled-bg disabled:text-disabled-text disabled:cursor-not-allowed">
+              <option value="">{{ f.anslag ? '– Välj anslagspost –' : 'Välj anslag först' }}</option>
+              @for (p of valbaraAnslagsposter(); track p.kod) {
+                <option [value]="p.kod">{{ p.kod }} {{ p.namn }}</option>
+              }
+            </select>
+            @if (f.anslag) {
+              <p class="text-[13px] text-text-muted mt-1">
+                Visar {{ valbaraAnslagsposter().length }} anslagspost{{ valbaraAnslagsposter().length === 1 ? '' : 'er' }} under anslag {{ f.anslag }}.
+              </p>
+            }
+          </div>
+
+          <fieldset>
+            <legend class="block text-sm font-medium text-text mb-1.5">Status</legend>
+            <div class="flex items-center gap-6">
+              <label class="flex items-center gap-2 text-sm text-text cursor-pointer">
+                <input type="radio" name="kalla-status" value="Aktiv" [checked]="f.status === 'Aktiv'" (change)="sattKallaStatus('Aktiv')" class="w-4 h-4 accent-primary" />
+                Aktiv
+              </label>
+              <label class="flex items-center gap-2 text-sm text-text cursor-pointer">
+                <input type="radio" name="kalla-status" value="Inaktiv" [checked]="f.status === 'Inaktiv'" (change)="sattKallaStatus('Inaktiv')" class="w-4 h-4 accent-primary" />
+                Inaktiv
+              </label>
+            </div>
+          </fieldset>
+        }
+
+        <!-- Formulär: Kontering -->
+        @if (kontForm(); as f) {
+          <div>
+            <label for="kont-finanskod" class="block text-sm font-medium text-text mb-1.5">Finanskod</label>
+            <input id="kont-finanskod" type="text" autocomplete="off" [ngModel]="f.finanskod" (ngModelChange)="sattKont('finanskod', $event)" name="finanskod"
+              [attr.aria-invalid]="visaFel(kontFel().finanskod) ? true : null"
+              class="w-full px-3 py-2 text-sm text-text border bg-surface outline-none focus:border-border-focus focus:shadow-focus font-mono"
+              [class]="visaFel(kontFel().finanskod) ? 'border-border-error' : 'border-border'" />
+            @if (visaFel(kontFel().finanskod); as fel) {
+              <p class="flex items-center gap-1 mt-1.5 text-[13px] text-error"><span class="material-symbols-outlined text-[16px]">error</span>{{ fel }}</p>
+            }
+          </div>
+          <div>
+            <label for="kont-kostnadsstalle" class="block text-sm font-medium text-text mb-1.5">Kostnadsställe</label>
+            <input id="kont-kostnadsstalle" type="text" autocomplete="off" [ngModel]="f.kostnadsstalle" (ngModelChange)="sattKont('kostnadsstalle', $event)" name="kostnadsstalle"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus focus:shadow-focus font-mono" />
+          </div>
+          <div>
+            <label for="kont-verksamhetskod" class="block text-sm font-medium text-text mb-1.5">Verksamhetskod</label>
+            <input id="kont-verksamhetskod" type="text" autocomplete="off" [ngModel]="f.verksamhetskod" (ngModelChange)="sattKont('verksamhetskod', $event)" name="verksamhetskod"
+              class="w-full px-3 py-2 text-sm text-text border border-border bg-surface outline-none focus:border-border-focus focus:shadow-focus font-mono" />
+          </div>
+        }
+      </div>
+
+      <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-border-muted">
+        <button type="button" (click)="stangDialog()"
+          class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">
+          Avbryt
+        </button>
+        <button type="submit"
+          class="px-4 py-2 text-sm bg-primary text-on-primary hover:bg-primary-hover transition-colors">
+          Spara
+        </button>
+      </div>
+    </form>
+  </div>
+}

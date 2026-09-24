@@ -36,6 +36,15 @@ Idag måste handläggaren först söka upp en organisation för att överhuvudta
 - **Egen datumväljare** med måndagsstart (Mån–Sön) används i filterpanelen, guiden och detaljvyn.
 - Snabbare laddning är ett backendkrav; gränssnittet förutsätter paginerad hämtning.
 
+## Startsida och Finansiering (2026-09-24)
+
+- **Startsida** `/` visar administrationsområdena som kort. Utlysningar och Finansiering är klickbara; övriga områden ingår inte i prototypen.
+- **Finansiering** `/finansiering` med tre flikar (`?flik=finansiering|kalla|kontering`), sök per flik och redigeringsdialog för att lägga till eller ändra rader:
+  - **Finansiering** – Namn (unikt), Beskrivning, Finansiell källa (från fliken Finansiell källa), Utbetalande/Beslutande organisation (värdeförråd), Kontering (från fliken Kontering), Status Aktiv/Inaktiv (förvalt Aktiv).
+  - **Finansiell källa** – Namn (unikt), Utgiftsområde → Anslag → Anslagspost i beroendekedja: anslag kan väljas först när utgiftsområde är valt och filtreras på att koden börjar med utgiftsområdets nummer (t.ex. `4.` matchar `4.1.17` men inte `24.1.4`); anslagspost på samma sätt mot valt anslag. Byte högre upp nollställer valen under.
+  - **Kontering** – Finanskod, Kostnadsställe, Verksamhetskod (fritext, minst ett fält).
+- Värdeförråden (organisationer, utgiftsområden, anslag, anslagsposter) och mockdata ligger i `src/app/finansiering/finansiering.service.ts`.
+
 ## Kom igång
 
 ```bash
@@ -50,3 +59,5 @@ npm start
 - `src/styles.css` – Kompass-tokens (Tailwind v4 `@theme`) + basstilar.
 - `src/app/utlysning.service.ts` – mockdata och statusmetadata (`STATUS_INFO`).
 - `src/app/utlysningar/` – listsidan med filtrering, sortering och paginering (signals).
+- `src/app/startsida/` – startsidan med administrationsområden.
+- `src/app/finansiering/` – Finansiering med flikarna Finansiering, Finansiell källa och Kontering.
