@@ -11,6 +11,12 @@ interface Omrade {
 
 const OMRADEN: Omrade[] = [
   {
+    titel: 'Ekonomisk integration (NY)',
+    beskrivning:
+      'Ny modell för konteringar mot Agresso: ekonomisystem, konteringsprofiler per utbetalande organisation och konteringsmallar med versioner.',
+    lank: '/ekonomisk-integration-ny',
+  },
+  {
     titel: 'Finansieringsmedel',
     beskrivning:
       'Här hanteras finansieringsmedlen som läggs till under respektive utlysning och i den ekonomiska integrationen.',

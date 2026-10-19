@@ -50,6 +50,14 @@ Idag måste handläggaren först söka upp en organisation för att överhuvudta
 - `/utlysningar-ny` visar samma utlysningar som `/utlysningar` men i en ny variant: valet av **finansieringsmedel** är ersatt av **Finansiering** (från administrationsområdet Finansiering) i guiden och detaljvyn, listan har en kolumn Finansiering och utlysningar kan **tas bort** (papperskorg per rad samt knapp i detaljvyn, med bekräftelse).
 - Tekniskt återanvänds list-, guide- och detaljkomponenterna via route-data `variant: 'ny'`; länkar, brödsmulor och validering följer varianten. Utlysningen har fältet `finansieringar` (id:n) vid sidan av `finansieringsmedel`.
 
+## Ekonomisk integration (NY) (2026-10-19)
+
+- `/ekonomisk-integration-ny` (första rutan på startsidan) testar en ny modell för konteringar mot Agresso i fyra steg: **Ekonomisystem** (skrivskyddat) → **Konteringsprofil** → **Konteringsmall** (med versioner) → **Kontering** (förhandsvisning av kodsträng). Befintlig "Ekonomisk integration" är orörd.
+- Tre flikar: Ekonomisystem (attribut, dimensioner, mappningsmatris m.m.), Konteringsprofiler (lista, guide i fem steg, Översikt/Mappning/Värdelistor/Konteringsmallar/Spärrperioder) och Konteringsmallar (lista, ny/kopia, versioner, skillnad och kodsträng).
+- Exempeldatan (seed) ligger i `src/app/ekonomisk-integration-ny/ei-seed.ts` och tolkas vid första start. Ändringar sparas i `localStorage`; knappen **Återställ exempeldata** läser in seeden igen. Data märkt `example`/`assumption` visas med etiketterna Exempeldata och Antagande.
+- Statusar, "Används i", varningar (regler P/V/M) och kodsträng räknas fram vid visning utifrån systemklockan.
+- Koden ligger i `src/app/ekonomisk-integration-ny/` och laddas lazy (`ei.routes.ts`).
+
 ## Kom igång
 
 ```bash

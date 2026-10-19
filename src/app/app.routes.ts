@@ -17,5 +17,11 @@ export const routes: Routes = [
   { path: 'utlysningar-ny', component: UtlysningarListaComponent, canActivate: [lasGuard], data: { variant: 'ny' } },
   { path: 'utlysningar-ny/ny', component: SkapaUtlysningComponent, canActivate: [lasGuard], data: { variant: 'ny' } },
   { path: 'utlysningar-ny/:id', component: UtlysningDetaljComponent, canActivate: [lasGuard], data: { variant: 'ny' } },
+  // Ekonomisk integration (NY): ny modell för konteringar mot Agresso (ekonomisystem → konteringsprofil → konteringsmall).
+  {
+    path: 'ekonomisk-integration-ny',
+    canActivate: [lasGuard],
+    loadChildren: () => import('./ekonomisk-integration-ny/ei.routes').then((m) => m.EI_ROUTES),
+  },
   { path: '**', redirectTo: '' },
 ];
