@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, CanActivateFn, Router } from '@angular/router';
 
-const LOSENORD = 'demo456';
+const LOSENORD = 'alto255';
 const NYCKEL = 'nypsAdminUpplast';
 
 export function arUpplast(): boolean {
