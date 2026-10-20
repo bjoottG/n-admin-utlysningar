@@ -17,7 +17,7 @@ export const routes: Routes = [
   { path: 'utlysningar-ny', component: UtlysningarListaComponent, canActivate: [lasGuard], data: { variant: 'ny' } },
   { path: 'utlysningar-ny/ny', component: SkapaUtlysningComponent, canActivate: [lasGuard], data: { variant: 'ny' } },
   { path: 'utlysningar-ny/:id', component: UtlysningDetaljComponent, canActivate: [lasGuard], data: { variant: 'ny' } },
-  // Ekonomisk integration (NY): ny modell för konteringar mot Agresso (ekonomisystem → konteringsprofil → konteringsmall).
+  // Ekonomisk integration (NY): ny modell för konteringar mot Agresso (ekonomisystem → integrationsprofil → konteringsmall).
   {
     path: 'ekonomisk-integration-ny',
     canActivate: [lasGuard],

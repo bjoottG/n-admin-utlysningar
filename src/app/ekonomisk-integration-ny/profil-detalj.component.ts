@@ -122,12 +122,12 @@ interface SparrForm {
               }
               @case ('ACTIVE') {
                 <button type="button" (click)="oppnaAvsluta()" [class]="k.sekundarLiten">Avsluta…</button>
-                <a [routerLink]="bas + '/konteringsprofiler/ny'" [queryParams]="{ utgaFran: p.id }" [class]="k.primar">
+                <a [routerLink]="bas + '/integrationsprofiler/ny'" [queryParams]="{ utgaFran: p.id }" [class]="k.primar">
                   <span class="material-symbols-outlined text-[18px]" aria-hidden="true">content_copy</span>Skapa ny profil utifrån denna
                 </a>
               }
               @case ('ENDED') {
-                <a [routerLink]="bas + '/konteringsprofiler/ny'" [queryParams]="{ utgaFran: p.id }" [class]="k.primar">
+                <a [routerLink]="bas + '/integrationsprofiler/ny'" [queryParams]="{ utgaFran: p.id }" [class]="k.primar">
                   <span class="material-symbols-outlined text-[18px]" aria-hidden="true">content_copy</span>Skapa ny profil utifrån denna
                 </a>
               }
@@ -137,7 +137,7 @@ interface SparrForm {
 
         <div class="bg-surface border border-border">
           <!-- Flikar -->
-          <div role="tablist" aria-label="Konteringsprofil" class="flex items-stretch border-b border-border px-2 overflow-x-auto">
+          <div role="tablist" aria-label="Integrationsprofil" class="flex items-stretch border-b border-border px-2 overflow-x-auto">
             @for (f of flikar; track f.id) {
               <button type="button" role="tab" [id]="'ei-pflik-' + f.id" [attr.aria-selected]="flik() === f.id"
                 [attr.aria-controls]="'ei-ppanel-' + f.id" (click)="valjFlik(f.id)"
@@ -356,7 +356,7 @@ interface SparrForm {
       }
 
       @if (avslutaDatum() !== null) {
-        <app-ei-dialog rubrik="Avsluta konteringsprofilen" (stang)="avslutaDatum.set(null)">
+        <app-ei-dialog rubrik="Avsluta integrationsprofilen" (stang)="avslutaDatum.set(null)">
           <div>
             <label for="ei-avsluta" [class]="k.etikett">Giltig till</label>
             <app-datum-valjare inputId="ei-avsluta" etikett="Giltig till" [varde]="avslutaDatum()!" (vardeChange)="avslutaDatum.set($event)" />
@@ -371,7 +371,7 @@ interface SparrForm {
       }
 
       @if (taBortOppen()) {
-        <app-ei-dialog rubrik="Ta bort konteringsprofilen?" roll="alertdialog" (stang)="taBortOppen.set(false)">
+        <app-ei-dialog rubrik="Ta bort integrationsprofilen?" roll="alertdialog" (stang)="taBortOppen.set(false)">
           @if (mallar().length) {
             <p [class]="k.fel + ' text-sm'"><span class="material-symbols-outlined text-[18px]">block</span>Profilen används i {{ mallar().length }} konteringsmall(ar). Ta bort eller flytta dem först.</p>
           } @else {
@@ -421,7 +421,7 @@ interface SparrForm {
       }
     } @else {
       <app-ei-ram flik="profiler" [brodsmulor]="[{ text: 'Hittades inte' }]">
-        <p class="text-sm text-text-muted">Konteringsprofilen finns inte. Den kan ha tagits bort.</p>
+        <p class="text-sm text-text-muted">Integrationsprofilen finns inte. Den kan ha tagits bort.</p>
       </app-ei-ram>
     }
   `,
@@ -461,7 +461,7 @@ export class EiProfilDetaljComponent {
     const p = this.profil();
     if (!p) return [];
     return [
-      { text: p.name, lank: `${EI_BAS}/konteringsprofiler/${p.id}` },
+      { text: p.name, lank: `${EI_BAS}/integrationsprofiler/${p.id}` },
       { text: FLIKAR.find((f) => f.id === this.flik())!.namn },
     ];
   });
@@ -524,7 +524,7 @@ export class EiProfilDetaljComponent {
     if (!p) return;
     this.planera.set(null);
     this.service.aktivera(p.id, a.datum, a.avslutaId);
-    this.service.visaBekraftelse(a.datum <= idag() ? 'Konteringsprofilen är aktiv.' : `Aktiveringen är planerad till ${a.datum}.`);
+    this.service.visaBekraftelse(a.datum <= idag() ? 'Integrationsprofilen är aktiv.' : `Aktiveringen är planerad till ${a.datum}.`);
   }
 
   angraPlanering(): void {
@@ -541,7 +541,7 @@ export class EiProfilDetaljComponent {
     const datum = this.avslutaDatum();
     if (!p || !datum) return;
     this.avslutaDatum.set(null);
-    this.service.andraProfil(p.id, (x) => ({ ...x, validTo: datum }), `Konteringsprofilen avslutas ${datum}.`);
+    this.service.andraProfil(p.id, (x) => ({ ...x, validTo: datum }), `Integrationsprofilen avslutas ${datum}.`);
   }
 
   taBort(): void {
@@ -549,7 +549,7 @@ export class EiProfilDetaljComponent {
     if (!p) return;
     this.taBortOppen.set(false);
     this.service.taBortProfil(p.id);
-    this.router.navigate([EI_BAS, 'konteringsprofiler']);
+    this.router.navigate([EI_BAS, 'integrationsprofiler']);
   }
 
   /* ---------- Grunduppgifter (utkast) ---------- */

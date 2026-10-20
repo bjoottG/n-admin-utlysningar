@@ -259,7 +259,7 @@ export function versionStatusKlass(s: VersionStatus): string {
 /** Begrepp (avsnitt 2) – visas som informationsikon vid rubriker och kolumnrubriker. */
 export const BEGREPP: Record<string, string> = {
   Ekonomisystem: 'Vad ett ekonomisystem kan ta emot. Sätts av utvecklare.',
-  Konteringsprofil: 'Hur en utbetalande organisation konterar i sitt ekonomisystem.',
+  Integrationsprofil: 'Hur en utbetalande organisation konterar i sitt ekonomisystem.',
   Mappning:
     'En rad i profilen: ett attribut kopplat till en Agresso-dimension, med böcker, värdeläge och värdelista.',
   Attribut: 'Ett konteringsbegrepp, till exempel Verksamhet.',
@@ -274,7 +274,7 @@ export const BEGREPP: Record<string, string> = {
   Version:
     'En konteringsmall har versioner med "giltig från". Den version som gäller på utbetalningsdagen används.',
   Kodsträng: 'Förhandsvisning av raden som skickas till Agresso, en per bok.',
-  'Utbetalande organisation': 'Organisationen som betalar ut och äger konteringsprofilen.',
+  'Utbetalande organisation': 'Organisationen som betalar ut och äger integrationsprofilen.',
   'Beslutande organisation': 'Organisationen som beslutar om stödet. Bara ett informationsfält i prototypen.',
 };
 

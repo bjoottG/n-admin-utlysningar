@@ -356,7 +356,7 @@ export type EiFlik = 'ekonomisystem' | 'profiler' | 'mallar';
 
 const TRAPPA = [
   { steg: 1, namn: 'Ekonomisystem', vad: 'Vad Agresso kan ta emot', agare: 'Utvecklare', prototyp: 'Skrivskyddat' },
-  { steg: 2, namn: 'Konteringsprofil', vad: 'Hur en utbetalande organisation konterar', agare: 'Ekonomiadministratör', prototyp: 'Skapa och hantera' },
+  { steg: 2, namn: 'Integrationsprofil', vad: 'Hur en utbetalande organisation konterar', agare: 'Ekonomiadministratör', prototyp: 'Skapa och hantera' },
   { steg: 3, namn: 'Konteringsmall', vad: 'Namngivna valda värden, med versioner', agare: 'Ekonom', prototyp: 'Skapa och hantera' },
   { steg: 4, namn: 'Kontering', vad: 'Det som skickas till Agresso', agare: 'Systemet', prototyp: 'Förhandsvisning (kodsträng)' },
 ];
@@ -387,7 +387,7 @@ const TRAPPA = [
             <h1 class="text-2xl font-semibold text-text leading-tight">Ekonomisk integration (NY)</h1>
             <p class="text-sm text-text-secondary mt-2 max-w-[78ch]">
               Ny modell för hur NYPS admin sätter upp konteringar mot Agresso. Ekonomisystemet anger vad Agresso kan ta emot,
-              konteringsprofilen hur en utbetalande organisation konterar och konteringsmallen vilka värden som väljs.
+              integrationsprofilen hur en utbetalande organisation konterar och konteringsmallen vilka värden som väljs.
             </p>
           </div>
           <div class="flex items-center gap-3">
@@ -410,7 +410,7 @@ const TRAPPA = [
           <button type="button" (click)="service.vaxlaTrappa()" [attr.aria-expanded]="!service.trappaHopfalld()" aria-controls="ei-trappa"
             class="flex items-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-text text-left hover:bg-component-hover">
             <span class="material-symbols-outlined text-[20px] transition-transform" [class.-rotate-90]="service.trappaHopfalld()" aria-hidden="true">expand_more</span>
-            Trappan: ekonomisystem, konteringsprofil, konteringsmall och kontering
+            Trappan: ekonomisystem, integrationsprofil, konteringsmall och kontering
           </button>
           @if (!service.trappaHopfalld()) {
             <ol id="ei-trappa" class="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-stretch gap-2 px-4 pb-4 pt-1 list-none m-0">
@@ -468,7 +468,7 @@ export class EiRamComponent {
 
   readonly flikar: { id: EiFlik; namn: string; lank: string }[] = [
     { id: 'ekonomisystem', namn: 'Ekonomisystem', lank: `${EI_BAS}/ekonomisystem` },
-    { id: 'profiler', namn: 'Konteringsprofiler', lank: `${EI_BAS}/konteringsprofiler` },
+    { id: 'profiler', namn: 'Integrationsprofiler', lank: `${EI_BAS}/integrationsprofiler` },
     { id: 'mallar', namn: 'Konteringsmallar', lank: `${EI_BAS}/konteringsmallar` },
   ];
 

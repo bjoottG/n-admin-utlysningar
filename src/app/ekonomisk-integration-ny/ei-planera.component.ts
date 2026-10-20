@@ -40,7 +40,7 @@ export interface Aktivering {
         <p class="text-sm text-text">
           {{ bekrafta()!.name }} avslutas {{ avslutasDatum() }}. Fortsätt?
         </p>
-        <p [class]="k.hjalp">Högst en aktiv konteringsprofil per organisation och dag.</p>
+        <p [class]="k.hjalp">Högst en aktiv integrationsprofil per organisation och dag.</p>
       }
       <button fot type="button" (click)="stang.emit()" [class]="k.sekundar">Avbryt</button>
       @if (!bekrafta()) {

@@ -32,9 +32,9 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
   selector: 'app-ei-profil-guide',
   imports: [FormsModule, EiRamComponent, EiBegreppComponent, EiDialogComponent, EiNotisComponent, EiPlaneraComponent],
   template: `
-    <app-ei-ram flik="profiler" [brodsmulor]="[{ text: 'Ny konteringsprofil' }]">
+    <app-ei-ram flik="profiler" [brodsmulor]="[{ text: 'Ny integrationsprofil' }]">
       <div class="max-w-[1100px]">
-        <h2 class="flex items-center gap-1 text-xl font-semibold text-text mb-4">Ny konteringsprofil <app-ei-begrepp term="Konteringsprofil" /></h2>
+        <h2 class="flex items-center gap-1 text-xl font-semibold text-text mb-4">Ny integrationsprofil <app-ei-begrepp term="Integrationsprofil" /></h2>
 
         <!-- Stegindikator -->
         <ol class="flex items-center gap-2 mb-5 list-none p-0 flex-wrap" aria-label="Steg">
@@ -430,7 +430,7 @@ export class EiProfilGuideComponent {
     if (!this.orgId()) fel.push('Välj utbetalande organisation.');
     if (!this.namn().trim()) fel.push('Ange ett namn.');
     else if (this.orgId() && this.service.namnUpptagetProfil(this.namn(), this.orgId(), null))
-      fel.push('Namnet används redan av en annan konteringsprofil för organisationen.');
+      fel.push('Namnet används redan av en annan integrationsprofil för organisationen.');
     if (!this.systemId()) fel.push('Välj ekonomisystem.');
     return fel;
   });
@@ -495,7 +495,7 @@ export class EiProfilGuideComponent {
 
   lamna(): void {
     this.avbrytOppen.set(false);
-    this.router.navigate([EI_BAS, 'konteringsprofiler']);
+    this.router.navigate([EI_BAS, 'integrationsprofiler']);
   }
 
   private ren(): PostingProfile {
@@ -513,8 +513,8 @@ export class EiProfilGuideComponent {
 
   sparaUtkast(): void {
     if (this.allaFel().length) return;
-    this.service.sparaProfil(this.ren(), 'Konteringsprofilen har sparats som utkast.');
-    this.router.navigate([EI_BAS, 'konteringsprofiler', this.id]);
+    this.service.sparaProfil(this.ren(), 'Integrationsprofilen har sparats som utkast.');
+    this.router.navigate([EI_BAS, 'integrationsprofiler', this.id]);
   }
 
   planera(a: Aktivering): void {
@@ -522,7 +522,7 @@ export class EiProfilGuideComponent {
     this.planeraOppen.set(false);
     this.service.sparaProfil(this.ren(), '');
     this.service.aktivera(this.id, a.datum, a.avslutaId);
-    this.service.visaBekraftelse(a.datum <= idag() ? 'Konteringsprofilen har sparats och är aktiv.' : `Konteringsprofilen har sparats. Aktiveringen är planerad till ${a.datum}.`);
-    this.router.navigate([EI_BAS, 'konteringsprofiler', this.id]);
+    this.service.visaBekraftelse(a.datum <= idag() ? 'Integrationsprofilen har sparats och är aktiv.' : `Integrationsprofilen har sparats. Aktiveringen är planerad till ${a.datum}.`);
+    this.router.navigate([EI_BAS, 'integrationsprofiler', this.id]);
   }
 }

@@ -75,7 +75,7 @@ interface VardeRad {
               <app-ei-kalla [kalla]="t.source" />
             </div>
             <dl class="flex flex-wrap gap-x-6 gap-y-1 mt-1.5 text-sm">
-              <div><dt class="inline text-text-muted mr-1">Konteringsprofil:</dt><dd class="inline"><a [routerLink]="bas + '/konteringsprofiler/' + p.id" [class]="k.lank">{{ p.name }}</a></dd></div>
+              <div><dt class="inline text-text-muted mr-1">Integrationsprofil:</dt><dd class="inline"><a [routerLink]="bas + '/integrationsprofiler/' + p.id" [class]="k.lank">{{ p.name }}</a></dd></div>
               <div><dt class="inline text-text-muted mr-1">Utbetalande organisation:</dt><dd class="inline">{{ service.hamtaOrg(p.organisationId)?.name }}</dd></div>
               <div><dt class="inline text-text-muted mr-1">Flöde:</dt><dd class="inline">{{ flodeNamn[t.flow] }} ({{ t.flow }})</dd></div>
               <div><dt class="inline text-text-muted mr-1">Avsedd för:</dt><dd class="inline">{{ avseddFor() }}</dd></div>
@@ -254,7 +254,7 @@ interface VardeRad {
                 <span>
                   {{ f.text }}
                   @if (f.attribut) {
-                    <a [routerLink]="bas + '/konteringsprofiler/' + p.id" [queryParams]="{ flik: 'vardelistor', attribut: f.attribut }" class="block" [class]="k.lank">Gå till värdelistan i konteringsprofilen</a>
+                    <a [routerLink]="bas + '/integrationsprofiler/' + p.id" [queryParams]="{ flik: 'vardelistor', attribut: f.attribut }" class="block" [class]="k.lank">Gå till värdelistan i integrationsprofilen</a>
                   }
                 </span>
               </li>
@@ -379,7 +379,7 @@ export class EiMallDetaljComponent {
     const p = this.profil();
     if (!t || !p) return;
     const fel: { text: string; attribut?: string }[] = [];
-    if (profilStatus(p) === 'ENDED') fel.push({ text: `Konteringsprofilen ${p.name} är avslutad.` });
+    if (profilStatus(p) === 'ENDED') fel.push({ text: `Integrationsprofilen ${p.name} är avslutad.` });
     const versioner = relevantaVersioner(t);
     for (const v of versioner.length ? versioner : sorteradeVersioner(t).slice(-1)) {
       for (const m of p.mappings.filter((x) => x.mode === 'SELECTABLE')) {
@@ -387,7 +387,7 @@ export class EiMallDetaljComponent {
         if (kod && aktivaVarden(m).some((x) => x.code === kod)) continue;
         const namn = this.service.attributNamn(p, m.attributeId);
         const text = !aktivaVarden(m).length
-          ? `${namn} saknar värde i versionen ${v.validFrom}. Värdelistan för ${namn} i konteringsprofilen har inga aktiva värden, så inget värde kan väljas.`
+          ? `${namn} saknar värde i versionen ${v.validFrom}. Värdelistan för ${namn} i integrationsprofilen har inga aktiva värden, så inget värde kan väljas.`
           : kod
             ? `${namn} ${kod} i versionen ${v.validFrom} är inaktivt. Skapa en ny version med ett aktivt värde.`
             : `${namn} saknar värde i versionen ${v.validFrom}. Alla valbara fält måste ha ett värde.`;

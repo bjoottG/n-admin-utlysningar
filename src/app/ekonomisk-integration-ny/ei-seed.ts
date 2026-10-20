@@ -106,7 +106,7 @@ export const SEED: SeedData = {
           oldName: 'Activity',
           oldCode: 'ACT',
           oldValues: 'UTB, INB',
-          replacedBy: 'Konteringsprofilens flöden (Utbetalning/Inbetalning)',
+          replacedBy: 'Integrationsprofilens flöden (Utbetalning/Inbetalning)',
         },
         {
           oldName: 'Decision frame',
@@ -118,7 +118,7 @@ export const SEED: SeedData = {
           oldName: 'Transaction type',
           oldCode: 'TRANS',
           oldValues: 'GL, AP, AR',
-          replacedBy: 'Konteringsprofilens böcker och Bokförs i per attribut',
+          replacedBy: 'Integrationsprofilens böcker och Bokförs i per attribut',
         },
         {
           oldName: 'Use cons account',
@@ -466,7 +466,7 @@ export const SEED: SeedData = {
       notices: [
         {
           level: 'info',
-          text: 'Utkast för att kunna testa byte av konteringsprofil. Kopia av Agresso – Tillväxtverket.',
+          text: 'Utkast för att kunna testa byte av integrationsprofil. Kopia av Agresso – Tillväxtverket.',
         },
       ],
     },

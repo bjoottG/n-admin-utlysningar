@@ -30,8 +30,8 @@ import { EkonomiskIntegrationService } from './ei.service';
               (vardeChange)="satt(m.attributeId, $event)" />
             @if (!alternativ(m).length) {
               <p [class]="k.hjalp">
-                Inga värden att välja. Lägg till värden i konteringsprofilen.
-                <a [routerLink]="bas + '/konteringsprofiler/' + profil().id" [queryParams]="{ flik: 'vardelistor', attribut: m.attributeId }" [class]="k.lank">Gå till värdelistan</a>
+                Inga värden att välja. Lägg till värden i integrationsprofilen.
+                <a [routerLink]="bas + '/integrationsprofiler/' + profil().id" [queryParams]="{ flik: 'vardelistor', attribut: m.attributeId }" [class]="k.lank">Gå till värdelistan</a>
               </p>
             } @else if (fel) {
               <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ fel }}</p>
@@ -40,7 +40,7 @@ import { EkonomiskIntegrationService } from './ei.service';
         }
       </div>
     } @else {
-      <p class="text-sm text-text-secondary">Alla värden sätts av konteringsprofilen. Granska och spara.</p>
+      <p class="text-sm text-text-secondary">Alla värden sätts av integrationsprofilen. Granska och spara.</p>
     }
   `,
 })
@@ -102,8 +102,8 @@ export class EiVardefaltComponent {
           <p class="text-sm text-text-muted">Profilen har inga fasta värden.</p>
         }
         <p [class]="k.hjalp">
-          Ändras i konteringsprofilen.
-          <a [routerLink]="bas + '/konteringsprofiler/' + profil().id" [queryParams]="{ flik: 'mappning' }" [class]="k.lank">Gå till mappningen</a>
+          Ändras i integrationsprofilen.
+          <a [routerLink]="bas + '/integrationsprofiler/' + profil().id" [queryParams]="{ flik: 'mappning' }" [class]="k.lank">Gå till mappningen</a>
         </p>
       </div>
     </details>

@@ -42,12 +42,12 @@ import { EiFranProfilenComponent, EiVardefaltComponent, EiVidUtbetalningComponen
         }
 
         <section class="bg-surface border border-border p-5 space-y-4">
-          <!-- 1. Konteringsprofil -->
+          <!-- 1. Integrationsprofil -->
           <div>
-            <label for="ei-n-profil" [class]="k.etikett">Konteringsprofil <span class="text-error" aria-hidden="true">*</span></label>
+            <label for="ei-n-profil" [class]="k.etikett">Integrationsprofil <span class="text-error" aria-hidden="true">*</span></label>
             <select id="ei-n-profil" name="profil" [ngModel]="profilId()" (ngModelChange)="valjProfil($event)" [class]="k.falt"
               [class.border-border-error]="visaFel(fel().profil)">
-              <option value="">– Välj konteringsprofil –</option>
+              <option value="">– Välj integrationsprofil –</option>
               @for (p of service.profiler(); track p.id) {
                 @let st = profilStatus(p);
                 <option [value]="p.id" [disabled]="st === 'ENDED'">
@@ -71,7 +71,7 @@ import { EiFranProfilenComponent, EiVardefaltComponent, EiVidUtbetalningComponen
               @if (visaFel(fel().namn); as f) {
                 <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ f }}</p>
               } @else {
-                <p [class]="k.hjalp">Unikt inom konteringsprofilen.</p>
+                <p [class]="k.hjalp">Unikt inom integrationsprofilen.</p>
               }
             </div>
             @if (profil(); as p) {
@@ -216,7 +216,7 @@ export class EiMallNyComponent {
   /** M1 och M3. */
   readonly fel = computed(() => {
     const fel: { profil?: string; namn?: string; giltigFran?: string } = {};
-    if (!this.profil()) fel.profil = 'Välj en konteringsprofil.';
+    if (!this.profil()) fel.profil = 'Välj en integrationsprofil.';
     if (!this.namn().trim()) fel.namn = 'Ange ett namn.';
     else if (this.profilId() && this.service.namnUpptagetMall(this.namn(), this.profilId(), null))
       fel.namn = 'Namnet används redan av en annan konteringsmall i profilen.';
@@ -260,7 +260,7 @@ export class EiMallNyComponent {
     const k = this.kopia();
     if (k) this.router.navigate([EI_BAS, 'konteringsmallar', k.id]);
     else if (this.route.snapshot.queryParamMap.get('profil'))
-      this.router.navigate([EI_BAS, 'konteringsprofiler', this.route.snapshot.queryParamMap.get('profil')], { queryParams: { flik: 'mallar' } });
+      this.router.navigate([EI_BAS, 'integrationsprofiler', this.route.snapshot.queryParamMap.get('profil')], { queryParams: { flik: 'mallar' } });
     else this.router.navigate([EI_BAS, 'konteringsmallar']);
   }
 }

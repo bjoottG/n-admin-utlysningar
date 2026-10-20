@@ -23,11 +23,11 @@ interface Grupp {
     <app-ei-ram flik="profiler">
       <div class="flex items-center justify-between gap-4 flex-wrap mb-3">
         <h2 class="flex items-center gap-1 text-lg font-semibold text-text">
-          Konteringsprofiler <app-ei-begrepp term="Konteringsprofil" />
+          Integrationsprofiler <app-ei-begrepp term="Integrationsprofil" />
         </h2>
-        <a [routerLink]="bas + '/konteringsprofiler/ny'" [class]="k.primar">
+        <a [routerLink]="bas + '/integrationsprofiler/ny'" [class]="k.primar">
           <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
-          Ny konteringsprofil
+          Ny integrationsprofil
         </a>
       </div>
 
@@ -36,7 +36,7 @@ interface Grupp {
           <thead>
             <tr class="border-b border-border">
               <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Organisation <app-ei-begrepp term="Utbetalande organisation" /></span></th>
-              <th scope="col" [class]="k.th">Konteringsprofil</th>
+              <th scope="col" [class]="k.th">Integrationsprofil</th>
               <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Ekonomisystem <app-ei-begrepp term="Ekonomisystem" /></span></th>
               <th scope="col" [class]="k.th">Status</th>
               <th scope="col" [class]="k.th">Giltig</th>
@@ -89,12 +89,12 @@ interface Grupp {
                     <span class="block text-[12px] font-normal text-text-muted">{{ g.org.shortName }}</span>
                   </th>
                   <td colspan="7" class="px-4 py-3 align-top">
-                    <p class="text-text-muted italic">Ingen konteringsprofil</p>
+                    <p class="text-text-muted italic">Ingen integrationsprofil</p>
                     <p class="text-[13px] text-text-secondary mt-0.5">
-                      {{ g.org.name }} har ingen konteringsprofil. Utan profil kan organisationen inte betala ut via ekonomisk integration.
+                      {{ g.org.name }} har ingen integrationsprofil. Utan profil kan organisationen inte betala ut via ekonomisk integration.
                     </p>
-                    <a [routerLink]="bas + '/konteringsprofiler/ny'" [queryParams]="{ org: g.org.id }" class="inline-flex items-center gap-1 mt-1.5 font-medium" [class]="k.lank">
-                      <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Skapa konteringsprofil
+                    <a [routerLink]="bas + '/integrationsprofiler/ny'" [queryParams]="{ org: g.org.id }" class="inline-flex items-center gap-1 mt-1.5 font-medium" [class]="k.lank">
+                      <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Skapa integrationsprofil
                     </a>
                   </td>
                 </tr>
@@ -121,7 +121,7 @@ export class EiProfilerListaComponent {
   );
 
   profilLank(id: string): string {
-    return `${EI_BAS}/konteringsprofiler/${id}`;
+    return `${EI_BAS}/integrationsprofiler/${id}`;
   }
   systemNamn(id: string): string {
     return this.service.hamtaSystem(id)?.name ?? id;

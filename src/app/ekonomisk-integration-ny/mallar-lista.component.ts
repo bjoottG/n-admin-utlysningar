@@ -38,7 +38,7 @@ import { EiMallTabellComponent } from './mall-tabell.component';
             </select>
           </div>
           <div>
-            <label for="ei-f-profil" [class]="k.etikett">Konteringsprofil</label>
+            <label for="ei-f-profil" [class]="k.etikett">Integrationsprofil</label>
             <select id="ei-f-profil" [ngModel]="profil()" (ngModelChange)="profil.set($event)" [class]="k.falt">
               <option value="">Alla</option>
               @for (p of profilval(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }

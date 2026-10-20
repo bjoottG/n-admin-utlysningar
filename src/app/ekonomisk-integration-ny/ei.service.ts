@@ -229,7 +229,7 @@ export class EkonomiskIntegrationService {
       if (!ut.some((x) => x.text === v.text)) ut.push(v);
     };
     if (profilStatus(profil) === 'ENDED') {
-      lagg({ regel: 'M8', text: `Konteringsprofilen ${profil.name} är avslutad.` });
+      lagg({ regel: 'M8', text: `Integrationsprofilen ${profil.name} är avslutad.` });
     }
     const versioner = relevantaVersioner(t);
     const attKolla = versioner.length ? versioner : sorteradeVersioner(t).slice(-1);
@@ -245,7 +245,7 @@ export class EkonomiskIntegrationService {
             lagg({
               regel: 'M2',
               text: tom
-                ? `${namn} saknar värde, och värdelistan i konteringsprofilen har inga aktiva värden.`
+                ? `${namn} saknar värde, och värdelistan i integrationsprofilen har inga aktiva värden.`
                 : `${namn} saknar värde. Alla valbara fält måste ha ett värde innan konteringsmallen kan aktiveras.`,
             });
           }
@@ -348,7 +348,7 @@ export class EkonomiskIntegrationService {
         avsluta = o;
       } else {
         fel.push(
-          `Överlappar med ${o.name} (${giltighetText(o.validFrom, o.validTo)}). Två konteringsprofiler för samma organisation får inte gälla samma dag.`,
+          `Överlappar med ${o.name} (${giltighetText(o.validFrom, o.validTo)}). Två integrationsprofiler för samma organisation får inte gälla samma dag.`,
         );
       }
     }
@@ -368,7 +368,7 @@ export class EkonomiskIntegrationService {
     const fel: string[] = [];
     if (!p.name.trim()) fel.push('Ange ett namn.');
     else if (this.namnUpptagetProfil(p.name, p.organisationId, p.id))
-      fel.push('Namnet används redan av en annan konteringsprofil för organisationen.');
+      fel.push('Namnet används redan av en annan integrationsprofil för organisationen.');
     if (!p.flows.length) fel.push('Välj minst ett flöde.');
     if (!p.transactionTypes.length) fel.push('Välj minst en bok.');
     return fel;
@@ -393,7 +393,7 @@ export class EkonomiskIntegrationService {
 
   /* ---------- Ändringar: profiler ---------- */
 
-  sparaProfil(p: PostingProfile, bekraftelse = 'Konteringsprofilen har sparats.'): void {
+  sparaProfil(p: PostingProfile, bekraftelse = 'Integrationsprofilen har sparats.'): void {
     this.uppdatera((d) => ({
       ...d,
       postingProfiles: d.postingProfiles.some((x) => x.id === p.id)
@@ -418,7 +418,7 @@ export class EkonomiskIntegrationService {
 
   taBortProfil(id: string): void {
     this.uppdatera((d) => ({ ...d, postingProfiles: d.postingProfiles.filter((p) => p.id !== id) }));
-    this.visaBekraftelse('Konteringsprofilen har tagits bort.');
+    this.visaBekraftelse('Integrationsprofilen har tagits bort.');
   }
 
   /* ---------- Ändringar: konteringsmallar ---------- */

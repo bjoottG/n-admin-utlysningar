@@ -42,7 +42,7 @@ import { EkonomiskIntegrationService } from './ei.service';
               <dl class="flex flex-wrap gap-x-6 gap-y-1 mt-3 text-sm">
                 <div><dt class="inline text-text-muted mr-1">Attribut:</dt> <dd class="inline text-text font-medium">{{ s.attributes.length }}</dd></div>
                 <div><dt class="inline text-text-muted mr-1">Dimensioner:</dt> <dd class="inline text-text font-medium">{{ s.categories.length }}</dd></div>
-                <div><dt class="inline text-text-muted mr-1">Konteringsprofiler:</dt> <dd class="inline text-text font-medium">{{ antalProfiler(s.id) }}</dd></div>
+                <div><dt class="inline text-text-muted mr-1">Integrationsprofiler:</dt> <dd class="inline text-text font-medium">{{ antalProfiler(s.id) }}</dd></div>
               </dl>
               <span class="mt-auto pt-3 self-end flex items-center text-interactive" aria-hidden="true">
                 <span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-0.5">arrow_forward</span>
@@ -88,7 +88,7 @@ interface Anvandning {
           </span>
         </div>
         <div class="mb-6 max-w-[900px]">
-          <app-ei-notis>Ekonomisystemet sätts upp av utvecklare och kan inte ändras här. Det visar vad som går att använda i en konteringsprofil.</app-ei-notis>
+          <app-ei-notis>Ekonomisystemet sätts upp av utvecklare och kan inte ändras här. Det visar vad som går att använda i en integrationsprofil.</app-ei-notis>
         </div>
 
         <nav class="flex flex-wrap gap-x-4 gap-y-1 mb-6 text-sm" aria-label="Innehåll">
@@ -213,7 +213,7 @@ interface Anvandning {
               <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-4 bg-gray-200 border border-border" aria-hidden="true"></span>Inte tillåten</span>
               <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-4 bg-surface border border-border" aria-hidden="true"></span>Tillåten men används inte</span>
               <span class="flex items-center gap-1.5"><span class="inline-block px-1.5 py-px text-xs font-medium rounded-sm bg-primary text-on-primary" aria-hidden="true">TVV</span>Används av profilen. Klicka för att se mappningen.</span>
-              <span class="text-text-muted">Visar aktiva och planerade konteringsprofiler.</span>
+              <span class="text-text-muted">Visar aktiva och planerade integrationsprofiler.</span>
             </div>
           </section>
 
@@ -351,7 +351,7 @@ export class EiEkonomisystemDetaljComponent {
   }
 
   profilLank(id: string): string {
-    return `${EI_BAS}/konteringsprofiler/${id}`;
+    return `${EI_BAS}/integrationsprofiler/${id}`;
   }
 
   hoppa(e: Event, id: string): void {

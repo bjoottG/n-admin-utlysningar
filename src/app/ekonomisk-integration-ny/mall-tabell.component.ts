@@ -23,7 +23,7 @@ import { EkonomiskIntegrationService } from './ei.service';
             <th scope="col" [class]="k.th + ' pl-5'">Konteringsmall</th>
             <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Utbetalande organisation <app-ei-begrepp term="Utbetalande organisation" /></span></th>
             @if (visaProfil()) {
-              <th scope="col" [class]="k.th">Konteringsprofil</th>
+              <th scope="col" [class]="k.th">Integrationsprofil</th>
             }
             <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Flöde <app-ei-begrepp term="Flöde" /></span></th>
             <th scope="col" [class]="k.th">Avsedd för</th>
@@ -44,7 +44,7 @@ import { EkonomiskIntegrationService } from './ei.service';
               @if (visaProfil()) {
                 <td class="px-4 py-3 align-top">
                   @if (profil) {
-                    <a [routerLink]="bas + '/konteringsprofiler/' + profil.id" [class]="k.lank">{{ profil.name }}</a>
+                    <a [routerLink]="bas + '/integrationsprofiler/' + profil.id" [class]="k.lank">{{ profil.name }}</a>
                   }
                 </td>
               }

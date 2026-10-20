@@ -52,8 +52,8 @@ Idag måste handläggaren först söka upp en organisation för att överhuvudta
 
 ## Ekonomisk integration (NY) (2026-10-19)
 
-- `/ekonomisk-integration-ny` (första rutan på startsidan) testar en ny modell för konteringar mot Agresso i fyra steg: **Ekonomisystem** (skrivskyddat) → **Konteringsprofil** → **Konteringsmall** (med versioner) → **Kontering** (förhandsvisning av kodsträng). Befintlig "Ekonomisk integration" är orörd.
-- Tre flikar: Ekonomisystem (attribut, dimensioner, mappningsmatris m.m.), Konteringsprofiler (lista, guide i fem steg, Översikt/Mappning/Värdelistor/Konteringsmallar/Spärrperioder) och Konteringsmallar (lista, ny/kopia, versioner, skillnad och kodsträng).
+- `/ekonomisk-integration-ny` (första rutan på startsidan) testar en ny modell för konteringar mot Agresso i fyra steg: **Ekonomisystem** (skrivskyddat) → **Integrationsprofil** → **Konteringsmall** (med versioner) → **Kontering** (förhandsvisning av kodsträng). Befintlig "Ekonomisk integration" är orörd.
+- Tre flikar: Ekonomisystem (attribut, dimensioner, mappningsmatris m.m.), Integrationsprofiler (lista, guide i fem steg, Översikt/Mappning/Värdelistor/Konteringsmallar/Spärrperioder) och Konteringsmallar (lista, ny/kopia, versioner, skillnad och kodsträng).
 - Exempeldatan (seed) ligger i `src/app/ekonomisk-integration-ny/ei-seed.ts` och tolkas vid första start. Ändringar sparas i `localStorage`; knappen **Återställ exempeldata** läser in seeden igen. Data märkt `example`/`assumption` visas med etiketterna Exempeldata och Antagande.
 - Statusar, "Används i", varningar (regler P/V/M) och kodsträng räknas fram vid visning utifrån systemklockan.
 - Koden ligger i `src/app/ekonomisk-integration-ny/` och laddas lazy (`ei.routes.ts`).
