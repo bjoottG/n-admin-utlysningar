@@ -347,7 +347,7 @@ export class EiSokbarListaComponent {
 }
 
 /* ============================================================
-   Ram: brödsmulor, rubrik, ingress, trappa, banners, flikar
+   Ram: brödsmulor, rubrik, banners, flikar
    ============================================================ */
 
 export interface Brodsmula {
@@ -357,19 +357,12 @@ export interface Brodsmula {
 }
 export type EiFlik = 'ekonomisystem' | 'profiler' | 'konteringar';
 
-const TRAPPA = [
-  { steg: 1, namn: 'Ekonomisystem', vad: 'Vad ett ekonomisystem kan ta emot: attribut, dimensioner, böcker, flöden', agare: 'Utvecklare', prototyp: 'Skrivskyddat' },
-  { steg: 2, namn: 'Integrationsprofil', vad: 'Hur en utbetalande organisation är kopplad till sitt ekonomisystem', agare: 'Ekonomiadministratör', prototyp: 'Skapa och hantera' },
-  { steg: 3, namn: 'Kontering', vad: 'Valda värden för finansieringsmedel, beslutande organisation och flöde, med versioner', agare: 'Ekonom', prototyp: 'Skapa och hantera' },
-  { steg: 4, namn: 'Kodsträng', vad: 'Det som skickas till Agresso vid en utbetalning', agare: 'Systemet', prototyp: 'Bara förhandsvisning' },
-];
-
 @Component({
   selector: 'app-ei-ram',
   imports: [RouterLink, ToppmenyComponent, EiDialogComponent, EiNotisComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-surface-subtle font-sans">
-      <app-toppmeny />
+      <app-toppmeny aterstallbar (aterstall)="visaAterstall.set(true)" />
 
       <nav class="flex items-center flex-wrap gap-1 px-6 py-2.5" aria-label="Brödsmulor">
         <a routerLink="/" class="text-[15px] text-interactive hover:underline">Startsida</a>
@@ -401,67 +394,15 @@ const TRAPPA = [
         }
 
         <!-- Sidhuvud -->
-        <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
-          <div>
-            <h1 class="text-2xl font-semibold text-text leading-tight">Ekonomisk integration (NY)</h1>
-            <p class="text-sm text-text-secondary mt-2 max-w-[80ch]">
-              Steg 1 av den nya ekonomiska integrationen. Ekonomisystemet anger vad systemet kan ta emot, integrationsprofilen hur en
-              utbetalande organisation är kopplad till sitt ekonomisystem och konteringen vilka värden som används för ett finansieringsmedel,
-              en beslutande organisation och ett flöde. Finansieringsmedel och utlysningar fungerar som idag.
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            @if (service.bekraftelse(); as text) {
-              <span class="flex items-center gap-1 text-[13px] text-success" role="status">
-                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">check_circle</span>
-                {{ text }}
-              </span>
-            }
-            <span class="group relative inline-flex">
-              <button type="button" (click)="visaAterstall.set(true)" aria-describedby="ei-aterstall-tips"
-                class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border bg-surface text-text-secondary hover:bg-component-hover transition-colors">
-                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">restart_alt</span>
-                Återställ exempeldata
-              </button>
-              <span id="ei-aterstall-tips" role="tooltip"
-                class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity absolute z-[1070] top-full right-0 mt-1 w-60 px-3 py-2 text-[13px] leading-snug text-text-inverse bg-surface-inverse shadow-lg">
-                Ändringar sparas separat för varje dataläge. Bara det aktiva dataläget ({{ service.anonymiserat ? 'anonymiserade' : 'riktiga' }} exempeldata) återställs.
-              </span>
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+          <h1 class="text-2xl font-semibold text-text leading-tight">Ekonomisk integration (NY)</h1>
+          @if (service.bekraftelse(); as text) {
+            <span class="flex items-center gap-1 text-[13px] text-success" role="status">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">check_circle</span>
+              {{ text }}
             </span>
-          </div>
-        </div>
-
-        <!-- Trappan -->
-        <section class="bg-surface border border-border mb-4" aria-label="Trappan i fyra steg">
-          <button type="button" (click)="service.vaxlaTrappa()" [attr.aria-expanded]="!service.trappaHopfalld()" aria-controls="ei-trappa"
-            class="flex items-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-text text-left hover:bg-component-hover">
-            <span class="material-symbols-outlined text-[20px] transition-transform" [class.-rotate-90]="service.trappaHopfalld()" aria-hidden="true">expand_more</span>
-            Trappan: ekonomisystem, integrationsprofil, kontering och kodsträng
-          </button>
-          @if (!service.trappaHopfalld()) {
-            <div id="ei-trappa" class="px-4 pb-4 pt-1">
-              <ol class="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-stretch gap-2 list-none m-0 p-0">
-                @for (s of trappa; track s.steg; let sist = $last) {
-                  <li class="flex flex-col px-3 py-2.5 border border-border-muted bg-surface-subtle" [style.margin-top.px]="(4 - s.steg) * 6">
-                    <span class="text-[12px] text-text-muted">Steg {{ s.steg }}</span>
-                    <span class="text-sm font-semibold text-text">{{ s.namn }}</span>
-                    <span class="text-[13px] text-text-secondary leading-snug">{{ s.vad }}</span>
-                    <span class="mt-auto pt-1.5 text-[12px] text-text-muted">Ägs av <span class="text-text">{{ s.agare }}</span> · {{ s.prototyp }}</span>
-                  </li>
-                  @if (!sist) {
-                    <li class="flex items-center text-text-muted" aria-hidden="true">
-                      <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-                    </li>
-                  }
-                }
-              </ol>
-              <p class="flex items-center gap-1.5 mt-3 text-sm text-text">
-                <span class="material-symbols-outlined text-[18px] text-info" aria-hidden="true">search</span>
-                Vid utbetalning hittas konteringen med ärendets finansieringsmedel, beslutande organisation och flöde.
-              </p>
-            </div>
           }
-        </section>
+        </div>
 
         <!-- Flikar -->
         <nav class="flex items-stretch border-b border-border mb-5" aria-label="Ekonomisk integration (NY)">
@@ -495,7 +436,6 @@ export class EiRamComponent {
   readonly flik = input.required<EiFlik>();
   readonly brodsmulor = input<Brodsmula[]>([]);
   readonly visaAterstall = signal(false);
-  readonly trappa = TRAPPA;
   readonly bas = EI_BAS;
   readonly k = K;
 

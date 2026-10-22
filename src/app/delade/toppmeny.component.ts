@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, booleanAttribute, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DataLage, bytDataLage, lasDataLage } from './datalage';
 
@@ -21,6 +21,20 @@ import { DataLage, bytDataLage, lasDataLage } from './datalage';
           <span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
         </a>
       </nav>
+
+      @if (aterstallbar()) {
+        <div class="group relative flex items-center h-full border-l border-white/10">
+          <button type="button" (click)="aterstall.emit()" aria-describedby="aterstall-tips"
+            class="flex items-center gap-1.5 px-4 h-full text-[13px] text-gray-300 hover:bg-white/10 whitespace-nowrap outline-none focus-visible:shadow-focus">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">restart_alt</span>
+            Återställ exempeldata
+          </button>
+          <span id="aterstall-tips" role="tooltip"
+            class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity absolute z-[1070] top-full right-2 mt-1 w-60 px-3 py-2 text-[13px] leading-snug text-text-inverse bg-surface-inverse shadow-lg">
+            Ändringar sparas separat för varje dataläge. Bara det aktiva dataläget ({{ lage }} exempeldata) återställs.
+          </span>
+        </div>
+      }
 
       <!-- Dataläge (avsnitt 11.2) -->
       <div class="group relative flex items-center gap-2 px-4 h-full border-l border-white/10">
@@ -52,6 +66,9 @@ import { DataLage, bytDataLage, lasDataLage } from './datalage';
   `,
 })
 export class ToppmenyComponent {
+  /** Visar "Återställ exempeldata" (används i Ekonomisk integration (NY)). */
+  readonly aterstallbar = input(false, { transform: booleanAttribute });
+  readonly aterstall = output<void>();
   readonly lage = lasDataLage();
   readonly lagen: { id: DataLage; namn: string }[] = [
     { id: 'riktiga', namn: 'Riktiga' },

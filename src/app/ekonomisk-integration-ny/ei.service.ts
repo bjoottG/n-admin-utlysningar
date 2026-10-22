@@ -36,7 +36,6 @@ import {
 const NYCKEL_PREFIX = 'nypsAdmin.ekonomiskIntegrationNy';
 /** Data från version 1 (konteringsmallar) – tas bort vid start. */
 const GAMMAL_NYCKEL = `${NYCKEL_PREFIX}.data`;
-const TRAPPA_NYCKEL = `${NYCKEL_PREFIX}.trappaHopfalld`;
 const dataNyckel = (lage: DataLage) => `${NYCKEL_PREFIX}.data.${lage}`;
 
 export type ProfilFlik = 'oversikt' | 'mappning' | 'vardelistor' | 'konteringar' | 'sparr';
@@ -199,8 +198,6 @@ export class EkonomiskIntegrationService {
   readonly bekraftelse = signal<string | null>(null);
   private bekraftelseTimer: ReturnType<typeof setTimeout> | undefined;
 
-  readonly trappaHopfalld = signal(this.lasTrappa());
-
   /* ---------- Spara / återställ ---------- */
 
   private uppdatera(fn: (d: EiData) => EiData): void {
@@ -222,23 +219,6 @@ export class EkonomiskIntegrationService {
     this.bekraftelse.set(text);
     clearTimeout(this.bekraftelseTimer);
     this.bekraftelseTimer = setTimeout(() => this.bekraftelse.set(null), 4000);
-  }
-
-  private lasTrappa(): boolean {
-    try {
-      return localStorage.getItem(TRAPPA_NYCKEL) === 'ja';
-    } catch {
-      return false;
-    }
-  }
-
-  vaxlaTrappa(): void {
-    this.trappaHopfalld.update((v) => !v);
-    try {
-      localStorage.setItem(TRAPPA_NYCKEL, this.trappaHopfalld() ? 'ja' : 'nej');
-    } catch {
-      // ignoreras
-    }
   }
 
   /* ---------- Uppslag av objekt ---------- */

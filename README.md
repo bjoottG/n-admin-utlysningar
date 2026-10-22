@@ -57,7 +57,7 @@ Idag måste handläggaren först söka upp en organisation för att överhuvudta
 - Konteringens namn räknas fram ur nyckeln. Konsumtionskonto väljs per version och är märkt "Tillfälligt".
 - **Datalägen**: knappen "Exempeldata: Riktiga | Anonymiserade" i sidhuvudet. Varje läge har egen lagrad data i `localStorage`; byte laddar om sidan. Det anonymiserade datasetet skapas ur seeden med namntabellen i `src/app/delade/datalage.ts`, som också används för Utlysningar och Finansiering (bara namnen i tabellen byts där).
 - Anonymiseringskontroll: kör `await eiKontrolleraAnonymisering()` i konsolen i anonymiserat läge. Den går igenom alla vyer i området och listar förbjudna ord.
-- Exempeldatan (seed v3) ligger i `src/app/ekonomisk-integration-ny/ei-seed.ts`. Lagrad data från tidigare versioner läses inte in. **Återställ exempeldata** återställer bara det aktiva dataläget.
+- Exempeldatan (seed v3) ligger i `src/app/ekonomisk-integration-ny/ei-seed.ts`. Lagrad data från tidigare versioner läses inte in. **Återställ exempeldata** (i den svarta menyraden) återställer bara det aktiva dataläget.
 - Statusar, "Används i", varningar (regler P, V, S och K) och kodsträng räknas fram vid visning utifrån systemklockan.
 
 ## Kom igång
