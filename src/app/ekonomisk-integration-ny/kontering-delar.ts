@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, model } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { EI_BAS, EiSokbarListaComponent, K, SokAlternativ } from './ei-delade';
-import { ARENDEFALT_NAMN, Flow, Mapping, PostingProfile, aktivaVarden, sorteradeMappningar } from './ei-modell';
+import { EI_BAS, EiKallaComponent, EiSokbarListaComponent, K, SokAlternativ } from './ei-delade';
+import { ARENDEFALT_NAMN, Flow, IntegrationProfile, Mapping, Source, TILLFALLIGT_TIPS, aktivaVarden } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
 
 /* ============================================================
-   Värden att välja – ett fält per mappning med läget Väljs i konteringsmallen
+   Värden att välja – ett fält per mappning med läget Väljs i konteringen
    ============================================================ */
 
 @Component({
@@ -48,13 +48,15 @@ export class EiVardefaltComponent {
   readonly service = inject(EkonomiskIntegrationService);
   readonly k = K;
   readonly bas = EI_BAS;
-  readonly profil = input.required<PostingProfile>();
+  readonly profil = input.required<IntegrationProfile>();
   readonly values = model.required<Record<string, string>>();
-  /** Visa fel för saknade värden (M2) och inaktiva värden. */
+  /** Visa fel för saknade värden (K3) och inaktiva värden. */
   readonly visaFel = input(false);
   readonly idPrefix = input('ei-val-');
 
-  readonly valbara = computed(() => sorteradeMappningar(this.profil()).filter((m) => m.mode === 'SELECTABLE'));
+  readonly valbara = computed(() =>
+    this.service.sorteradeMappningar(this.profil()).filter((m) => m.mode === 'SELECTABLE'),
+  );
 
   alternativ(m: Mapping): SokAlternativ[] {
     return aktivaVarden(m).map((v) => ({ kod: v.code, namn: v.name }));
@@ -70,6 +72,61 @@ export class EiVardefaltComponent {
   satt(attributId: string, kod: string): void {
     this.values.update((v) => ({ ...v, [attributId]: kod }));
   }
+}
+
+/* ============================================================
+   Använd konsumtionskonto (tillfälligt)
+   ============================================================ */
+
+@Component({
+  selector: 'app-ei-konsumtionskonto',
+  imports: [EiKallaComponent],
+  template: `
+    <div [attr.role]="lasbar() ? null : 'radiogroup'" [attr.aria-labelledby]="id + '-etikett'">
+      <div class="flex items-center gap-2 flex-wrap mb-1.5">
+        <span [id]="id + '-etikett'" class="text-sm font-medium text-text">Använd konsumtionskonto</span>
+        <span class="group relative inline-flex">
+          <span tabindex="0" [attr.aria-describedby]="id + '-tips'"
+            class="inline-flex px-1.5 py-px text-[11px] font-medium leading-4 rounded-sm border cursor-help bg-surface-warning text-on-surface-warning border-border-warning focus:outline-none focus-visible:shadow-focus">Tillfälligt</span>
+          <span [id]="id + '-tips'" role="tooltip"
+            class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity absolute z-[1070] top-full left-0 mt-1 w-64 px-3 py-2 text-[13px] leading-snug text-text-inverse bg-surface-inverse shadow-lg">
+            {{ tips }}
+          </span>
+        </span>
+        <app-ei-kalla [kalla]="kalla()" />
+      </div>
+      @if (lasbar()) {
+        <p class="text-sm text-text">{{ varde() ? 'Ja' : 'Nej' }}</p>
+      } @else {
+        <div class="flex items-center gap-5">
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" [name]="id" class="w-4 h-4 accent-primary" [checked]="varde()" (change)="varde.set(true)" /> Ja
+          </label>
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" [name]="id" class="w-4 h-4 accent-primary" [checked]="!varde()" (change)="varde.set(false)" /> Nej
+          </label>
+        </div>
+      }
+      <p [class]="k.hjalp">{{ kontotypText() }}</p>
+    </div>
+  `,
+})
+export class EiKonsumtionskontoComponent {
+  private static raknare = 0;
+  private readonly service = inject(EkonomiskIntegrationService);
+  readonly k = K;
+  readonly tips = TILLFALLIGT_TIPS;
+  readonly id = `ei-konsumtion-${++EiKonsumtionskontoComponent.raknare}`;
+  readonly varde = model(false);
+  readonly lasbar = input(false);
+  readonly kalla = input<Source | null | undefined>(null);
+  readonly finansieringsmedelId = input<string | null>(null);
+
+  readonly kontotypText = computed(() => {
+    const f = this.service.hamtaFinansieringsmedel(this.finansieringsmedelId());
+    if (!f) return 'Välj finansieringsmedel för att se dess kontotyp.';
+    return f.kontotyp ? `Finansieringsmedlets kontotyp: ${f.kontotyp}` : 'Finansieringsmedlet saknar kontotyp';
+  });
 }
 
 /* ============================================================
@@ -113,12 +170,13 @@ export class EiFranProfilenComponent {
   private readonly service = inject(EkonomiskIntegrationService);
   readonly k = K;
   readonly bas = EI_BAS;
-  readonly profil = input.required<PostingProfile>();
+  readonly profil = input.required<IntegrationProfile>();
   readonly flode = input<Flow>('UTB');
 
   readonly rader = computed(() => {
     const p = this.profil();
-    return sorteradeMappningar(p)
+    return this.service
+      .sorteradeMappningar(p)
       .filter((m) => m.mode === 'FIXED' || m.mode === 'FOLLOWS_FLOW')
       .map((m) => ({
         namn: this.service.attributNamn(p, m.attributeId),
@@ -140,30 +198,22 @@ export class EiFranProfilenComponent {
       <ul class="text-sm space-y-1 list-none m-0 p-0">
         @for (r of franArendet(); track r) {
           <li>{{ r }}: hämtas från ärendet</li>
-        }
-        <li>
-          Konsumtionskonto: hämtas från finansieringsmedlet.
-          @if (finansieringsmedel(); as f) {
-            <span class="text-text-secondary">{{ f.kontotyp ? 'Kontotyp: ' + f.kontotyp : 'Kontotyp saknas' }}</span>
-          }
-        </li>
-        @if (gammalt()) {
-          <li class="text-text-secondary">I gamla konfigurationen: Konsumtionskonto {{ gammalt() }}</li>
+        } @empty {
+          <li class="text-text-muted">Inga värden hämtas från ärendet.</li>
         }
       </ul>
+      <p class="text-sm text-text-secondary mt-2">Konto och leverantörsgrupp sätts utanför konteringen.</p>
     </section>
   `,
 })
 export class EiVidUtbetalningComponent {
   private readonly service = inject(EkonomiskIntegrationService);
-  readonly profil = input.required<PostingProfile>();
-  readonly finansieringsmedelId = input<string | null>(null);
-  readonly gammalt = input<'Ja' | 'Nej' | null>(null);
+  readonly profil = input.required<IntegrationProfile>();
 
-  readonly finansieringsmedel = computed(() => this.service.hamtaFinansieringsmedel(this.finansieringsmedelId()));
   readonly franArendet = computed(() => {
     const p = this.profil();
-    return sorteradeMappningar(p)
+    return this.service
+      .sorteradeMappningar(p)
       .filter((m) => m.mode === 'FROM_CASE')
       .map((m) => `${this.service.attributNamn(p, m.attributeId)} (${ARENDEFALT_NAMN[m.caseField ?? 'CASE_ID']})`);
   });

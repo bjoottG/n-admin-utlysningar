@@ -11,14 +11,13 @@ import {
   LAGE_NAMN,
   LAGE_ORDNING,
   Mapping,
-  PostingProfile,
-  PostingTemplate,
+  IntegrationProfile,
+  PostingConfig,
   TransactionType,
   ValueMode,
   aktivaVarden,
   mappningsfel,
   profilStatus,
-  sorteradeMappningar,
   standardMappning,
 } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
@@ -29,7 +28,7 @@ import { EkonomiskIntegrationService } from './ei.service';
   template: `
     <div class="flex items-center justify-between gap-4 flex-wrap px-5 py-4">
       <p class="text-sm text-text-secondary max-w-[80ch]">
-        En rad per attribut, sorterad på Agresso-dimension. Redigera med pennan.
+        En rad per attribut, sorterad i ekonomisystemets dimensionsordning. Redigera med pennan.
       </p>
       <button type="button" (click)="oppnaLaggTill()" [class]="k.sekundarLiten" [disabled]="!saknadeAttribut().length">
         <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
@@ -42,7 +41,7 @@ import { EkonomiskIntegrationService } from './ei.service';
         <thead>
           <tr class="border-y border-border">
             <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Agresso-dimension <app-ei-begrepp term="Agresso-dimension" /></span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Dimension <app-ei-begrepp term="Dimension" /></span></th>
             <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Bokförs i <app-ei-begrepp term="Bokförs i" /></span></th>
             <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Värde i kontering <app-ei-begrepp term="Värde i kontering" /></span></th>
             <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Värdelista <app-ei-begrepp term="Värdelista" /></span></th>
@@ -85,7 +84,7 @@ import { EkonomiskIntegrationService } from './ei.service';
                 @if (m.mode === 'SELECTABLE') {
                   @let n = anvands(m).length;
                   @if (n) {
-                    <button type="button" (click)="visaAnvands.set(m.attributeId)" [class]="k.lank">{{ n }} {{ n === 1 ? 'konteringsmall' : 'konteringsmallar' }}</button>
+                    <button type="button" (click)="visaAnvands.set(m.attributeId)" [class]="k.lank">{{ n }} {{ n === 1 ? 'kontering' : 'konteringar' }}</button>
                   } @else { <span class="text-text-subtle">–</span> }
                 } @else {
                   <span class="text-text-subtle">–</span>
@@ -118,7 +117,7 @@ import { EkonomiskIntegrationService } from './ei.service';
         </div>
 
         <div>
-          <label for="ei-m-dim" [class]="k.etikett">Agresso-dimension</label>
+          <label for="ei-m-dim" [class]="k.etikett">Dimension</label>
           <select id="ei-m-dim" [class]="k.falt + ' font-mono'" [ngModel]="u.category" (ngModelChange)="satt({ category: $event })">
             @for (c of valbaraDimensioner(); track c) {
               <option [value]="c">{{ c }}</option>
@@ -185,7 +184,7 @@ import { EkonomiskIntegrationService } from './ei.service';
         @if (andrarValbarhet()) {
           <p class="flex items-start gap-1.5 text-[13px] text-warning-dark">
             <span class="material-symbols-outlined text-[16px] text-warning" aria-hidden="true">warning</span>
-            Attributet {{ u.mode === 'SELECTABLE' ? 'blir valbart' : 'slutar vara valbart' }} i konteringsmallarna. Berörda konteringsmallar får varningen "Behöver ses över".
+            Attributet {{ u.mode === 'SELECTABLE' ? 'blir valbart' : 'slutar vara valbart' }} i konteringarna. Berörda konteringar får varningen "Behöver ses över".
           </p>
         }
 
@@ -223,11 +222,11 @@ import { EkonomiskIntegrationService } from './ei.service';
     @if (paverkan(); as p) {
       <app-ei-dialog rubrik="Bekräfta ändringen" roll="alertdialog" (stang)="paverkan.set(null)">
         <p class="text-sm text-text">
-          Ändringen påverkar {{ paverkade().length }} {{ paverkade().length === 1 ? 'konteringsmall' : 'konteringsmallar' }} och alla kommande utbetalningar som använder profilen.
+          Ändringen påverkar {{ paverkade().length }} {{ paverkade().length === 1 ? 'kontering' : 'konteringar' }} och alla kommande utbetalningar som använder profilen.
         </p>
         @if (paverkade().length) {
           <ul class="list-disc pl-5 text-sm text-text space-y-0.5">
-            @for (t of paverkade(); track t.id) { <li>{{ t.name }}</li> }
+            @for (t of paverkade(); track t.id) { <li>{{ service.konteringNamn(t) }}</li> }
           </ul>
         }
         <button fot type="button" (click)="paverkan.set(null)" [class]="k.sekundar">Avbryt</button>
@@ -238,10 +237,10 @@ import { EkonomiskIntegrationService } from './ei.service';
     <!-- Ta bort attribut (P11) -->
     @if (taBort(); as m) {
       @let namn = service.attributNamn(profil(), m.attributeId);
-      @let n = service.mallarSomAnvanderAttribut(profil().id, m.attributeId).length;
+      @let n = service.konteringarSomAnvanderAttribut(profil().id, m.attributeId).length;
       <app-ei-dialog [rubrik]="'Ta bort ' + namn + '?'" roll="alertdialog" (stang)="taBort.set(null)">
         @if (n) {
-          <p [class]="k.fel + ' text-sm'"><span class="material-symbols-outlined text-[18px]">block</span>Används i {{ n }} {{ n === 1 ? 'konteringsmall' : 'konteringsmallar' }}. Ta bort det från konteringsmallarna först.</p>
+          <p [class]="k.fel + ' text-sm'"><span class="material-symbols-outlined text-[18px]">block</span>Används i {{ n }} {{ n === 1 ? 'kontering' : 'konteringar' }}. Ta bort det från konteringarna först.</p>
         } @else {
           <p class="text-sm text-text">{{ namn }} och dess värdelista tas bort från profilen.</p>
         }
@@ -256,8 +255,8 @@ import { EkonomiskIntegrationService } from './ei.service';
     @if (visaAnvands(); as a) {
       <app-ei-dialog [rubrik]="service.attributNamn(profil(), a) + ' används i'" (stang)="visaAnvands.set(null)">
         <ul class="text-sm space-y-1 list-none p-0 m-0">
-          @for (t of service.mallarSomAnvanderAttribut(profil().id, a); track t.id) {
-            <li><a [routerLink]="bas + '/konteringsmallar/' + t.id" [class]="k.lank">{{ t.name }}</a></li>
+          @for (t of service.konteringarSomAnvanderAttribut(profil().id, a); track t.id) {
+            <li><a [routerLink]="bas + '/konteringar/' + t.id" [class]="k.lank">{{ service.konteringNamn(t) }}</a></li>
           }
         </ul>
         <button fot type="button" (click)="visaAnvands.set(null)" [class]="k.sekundar">Stäng</button>
@@ -276,20 +275,20 @@ export class EiProfilMappningComponent {
   readonly arendefaltNamn = ARENDEFALT_NAMN;
   readonly aktivaVarden = aktivaVarden;
 
-  readonly profil = input.required<PostingProfile>();
+  readonly profil = input.required<IntegrationProfile>();
 
   readonly utkast = signal<Mapping | null>(null);
   readonly arNy = signal(false);
   readonly forsokSpara = signal(false);
   readonly laggTillOppen = signal(false);
   readonly nyttAttribut = signal('');
-  readonly paverkan = signal<{ profil: PostingProfile; text: string } | null>(null);
+  readonly paverkan = signal<{ profil: IntegrationProfile; text: string } | null>(null);
   readonly taBort = signal<Mapping | null>(null);
   readonly visaAnvands = signal<string | null>(null);
 
-  readonly mappningar = computed(() => sorteradeMappningar(this.profil()));
+  readonly mappningar = computed(() => this.service.sorteradeMappningar(this.profil()));
   readonly profilBocker = computed(() => BOK_ORDNING.filter((b) => this.profil().transactionTypes.includes(b)));
-  readonly paverkade = computed<PostingTemplate[]>(() => this.service.paverkadeMallar(this.profil().id));
+  readonly paverkade = computed<PostingConfig[]>(() => this.service.paverkadeKonteringar(this.profil().id));
 
   readonly saknadeAttribut = computed(() => {
     const p = this.profil();
@@ -337,8 +336,8 @@ export class EiProfilMappningComponent {
     return aktivaVarden(m).length;
   }
 
-  anvands(m: Mapping): PostingTemplate[] {
-    return this.service.mallarSomAnvanderAttribut(this.profil().id, m.attributeId);
+  anvands(m: Mapping): PostingConfig[] {
+    return this.service.konteringarSomAnvanderAttribut(this.profil().id, m.attributeId);
   }
 
   radVarning(m: Mapping): string | null {
@@ -367,7 +366,7 @@ export class EiProfilMappningComponent {
     this.laggTillOppen.set(false);
     this.arNy.set(true);
     this.forsokSpara.set(false);
-    this.utkast.set(standardMappning(attribut, p.mappings.map((m) => m.category), p.transactionTypes));
+    this.utkast.set(standardMappning(attribut, this.service.ordning(p), p.mappings.map((m) => m.category), p.transactionTypes));
   }
 
   stangPanel(): void {
@@ -409,7 +408,7 @@ export class EiProfilMappningComponent {
     if (ursprung && ursprung.mode !== ren.mode) delete ren.modeSource;
     if (ursprung && ursprung.bookIn.join() !== ren.bookIn.join()) delete ren.bookInSource;
     const p = this.profil();
-    const ny: PostingProfile = {
+    const ny: IntegrationProfile = {
       ...p,
       mappings: this.arNy() ? [...p.mappings, ren] : p.mappings.map((m) => (m.attributeId === ren.attributeId ? ren : m)),
     };
@@ -430,13 +429,13 @@ export class EiProfilMappningComponent {
 
   /* ---------- P12 ---------- */
 
-  private kravBekraftelse(ny: PostingProfile, text: string): void {
+  private kravBekraftelse(ny: IntegrationProfile, text: string): void {
     const status = profilStatus(this.profil());
     if (status === 'ACTIVE' || status === 'PLANNED') this.paverkan.set({ profil: ny, text });
     else this.sparaProfil(ny, text);
   }
 
-  sparaProfil(ny: PostingProfile, text: string): void {
+  sparaProfil(ny: IntegrationProfile, text: string): void {
     this.paverkan.set(null);
     this.service.sparaProfil(ny, text);
   }

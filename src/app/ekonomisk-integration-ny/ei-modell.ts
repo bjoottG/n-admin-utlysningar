@@ -1,17 +1,19 @@
 /* ============================================================
-   Informationsmodell – Ekonomisk integration (NY)
+   Informationsmodell – Ekonomisk integration (NY), version 3
    Fältnamn på engelska (som i NYPS-koden), allt i gränssnittet på svenska.
    ============================================================ */
 
-export type Category = 'DIM1' | 'DIM2' | 'DIM3' | 'DIM4' | 'DIM5' | 'DIM6' | 'DIM7' | 'INVOICE_NO' | 'CURRENCY';
+/** Agresso: DIM1–DIM7, INVOICE_NO, CURRENCY. Raindance: KODDEL1–KODDEL8, FAKTURAREF, VALUTA. */
+export type Category = string;
 export type TransactionType = 'GL' | 'AP' | 'AR';
 export type Flow = 'UTB' | 'INB';
 export type Source = 'underlag' | 'example' | 'assumption';
 export type ValueMode = 'SELECTABLE' | 'FIXED' | 'FROM_CASE' | 'FOLLOWS_FLOW';
 export type CaseField = 'CASE_ID' | 'COUNTERPART_CODE';
 export type ProfileStatus = 'DRAFT' | 'PLANNED' | 'ACTIVE' | 'ENDED';
-export type TemplateStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE';
+export type PostingConfigStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE';
 export type VersionStatus = 'CURRENT' | 'UPCOMING' | 'PREVIOUS';
+export type BlockStatus = 'ONGOING' | 'UPCOMING' | 'ENDED';
 
 export interface SystemAttribute {
   id: string;
@@ -23,14 +25,19 @@ export interface SystemAttribute {
 export interface EconomicSystem {
   id: string;
   name: string;
+  vendor: string;
   description: string;
+  integrationStatus: 'AVAILABLE' | 'NOT_AVAILABLE';
+  integrationStatusText: string;
   attributes: SystemAttribute[];
   attributeDescriptionsSource?: Source;
+  /** Ordningen styr kodsträngen. */
   categories: { code: Category; label: string; description: string }[];
   transactionTypes: { code: TransactionType; label: string }[];
   flows: { code: Flow; label: string }[];
   caseFields: { code: CaseField; label: string }[];
   replacedSystemAttributes: { oldName: string; oldCode: string; oldValues: string; replacedBy: string }[];
+  source: Source;
 }
 
 /** Utbetalande organisation. */
@@ -39,19 +46,21 @@ export interface Organisation {
   nypsId: number | null;
   name: string;
   shortName: string;
+  source: Source;
+  note?: string;
 }
-/** Beslutande organisation (bara information). */
 export interface DecidingOrganisation {
   id: string;
   name: string;
 }
-/** Finansieringsmedel (bara information). */
 export interface FundingSource {
   id: string;
+  shortName: string;
   anslag: string;
   uppdrag: string;
   deluppdrag: string | null;
   kontotyp: string | null;
+  source: Source;
 }
 
 export interface Notice {
@@ -85,14 +94,22 @@ export interface Mapping {
 
 export interface BlockedPeriod {
   id: string;
+  /** Datum, eller datum och tid ("2026-10-22 14:05"). */
   from: string;
   to: string | null;
   reason: string;
   createdBy: string;
   createdAt: string;
+  source?: Source;
 }
 
-export interface PostingProfile {
+export interface TechnicalProperty {
+  key: string;
+  label: string;
+  value: string | null;
+}
+
+export interface IntegrationProfile {
   id: string;
   name: string;
   organisationId: string;
@@ -105,33 +122,38 @@ export interface PostingProfile {
   flows: Flow[];
   transactionTypes: TransactionType[];
   mappings: Mapping[];
+  technicalProperties: TechnicalProperty[];
   blockedPeriods: BlockedPeriod[];
   notices: Notice[];
   source: Source;
   copyOf?: string;
 }
 
-export interface TemplateVersion {
+export interface PostingConfigVersion {
   id: string;
   validFrom: string;
   validFromSource?: Source;
   changeReason: string | null;
   changeReasonSource?: Source;
   createdAt: string;
-  /** attributeId → kod. Bara för mappningar med läget Väljs i konteringsmallen. */
+  /** attributeId → kod. Bara för mappningar med läget Väljs i konteringen. */
   values: Record<string, string>;
+  /** Tillfälligt – flyttas senare till stödets klassificering. */
+  useConsumptionAccount: boolean;
+  useConsumptionAccountSource?: Source;
   source: Source;
 }
 
-export interface PostingTemplate {
+/** "Kontering" i gränssnittet. Namnet räknas fram ur nyckeln. */
+export interface PostingConfig {
   id: string;
-  name: string;
   profileId: string;
+  fundingSourceId: string;
+  decidingOrganisationId: string;
   flow: Flow;
-  status: TemplateStatus;
-  intendedFor: { fundingSourceId: string | null; decidingOrganisationId: string | null };
-  legacyConsumptionAccount: 'Ja' | 'Nej' | null;
-  versions: TemplateVersion[];
+  status: PostingConfigStatus;
+  description: string | null;
+  versions: PostingConfigVersion[];
   notices: Notice[];
   source: Source;
 }
@@ -142,8 +164,8 @@ export interface EiData {
   organisations: Organisation[];
   decidingOrganisations: DecidingOrganisation[];
   fundingSources: FundingSource[];
-  postingProfiles: PostingProfile[];
-  postingTemplates: PostingTemplate[];
+  integrationProfiles: IntegrationProfile[];
+  postingConfigs: PostingConfig[];
 }
 
 /* ---------- Seedens form (före tolkning) ---------- */
@@ -152,10 +174,11 @@ export interface SeedMapping extends Omit<Mapping, 'values'> {
   values: string[];
 }
 export interface SeedProfile
-  extends Omit<PostingProfile, 'mappings' | 'blockedPeriods' | 'flows' | 'transactionTypes'> {
+  extends Omit<IntegrationProfile, 'mappings' | 'blockedPeriods' | 'flows' | 'transactionTypes' | 'technicalProperties'> {
   flows?: Flow[];
   transactionTypes?: TransactionType[];
   mappings?: SeedMapping[];
+  technicalProperties?: TechnicalProperty[];
   blockedPeriods?: BlockedPeriod[];
 }
 export interface SeedData {
@@ -165,20 +188,25 @@ export interface SeedData {
   decidingOrganisations: DecidingOrganisation[];
   fundingSources: FundingSource[];
   valueNames: { source: Source } & Record<string, Record<string, string> | Source>;
-  postingProfiles: SeedProfile[];
-  postingTemplates: PostingTemplate[];
+  integrationProfiles: SeedProfile[];
+  postingConfigs: PostingConfig[];
+  anonymization: {
+    description: string;
+    organisationShortNames: Record<string, string>;
+    codes: Record<string, Record<string, string>>;
+    textReplacements: [string, string][];
+    forbiddenWords: string[];
+  };
 }
 
 /* ============================================================
    Etiketter
    ============================================================ */
 
-export const KATEGORI_ORDNING: Category[] = [
-  'DIM1', 'DIM2', 'DIM3', 'DIM4', 'DIM5', 'DIM6', 'DIM7', 'INVOICE_NO', 'CURRENCY',
-];
 export const BOK_ORDNING: TransactionType[] = ['GL', 'AP', 'AR'];
 export const FLODE_ORDNING: Flow[] = ['UTB', 'INB'];
 export const LAGE_ORDNING: ValueMode[] = ['SELECTABLE', 'FIXED', 'FROM_CASE', 'FOLLOWS_FLOW'];
+export const ARENDEFALT_ORDNING: CaseField[] = ['CASE_ID', 'COUNTERPART_CODE'];
 
 export const BOK_NAMN: Record<TransactionType, string> = {
   GL: 'Huvudbok',
@@ -188,14 +216,14 @@ export const BOK_NAMN: Record<TransactionType, string> = {
 export const FLODE_NAMN: Record<Flow, string> = { UTB: 'Utbetalning', INB: 'Inbetalning' };
 
 export const LAGE_NAMN: Record<ValueMode, string> = {
-  SELECTABLE: 'Väljs i konteringsmallen',
+  SELECTABLE: 'Väljs i konteringen',
   FIXED: 'Fast värde',
   FROM_CASE: 'Hämtas från ärendet',
   FOLLOWS_FLOW: 'Följer flödet',
 };
-/** Ursprung i konteringsmallens värdetabell. */
+/** Ursprung i konteringens värdetabell. */
 export const URSPRUNG_NAMN: Record<ValueMode, string> = {
-  SELECTABLE: 'Vald i mallen',
+  SELECTABLE: 'Vald i konteringen',
   FIXED: 'Fast i profilen',
   FROM_CASE: 'Från ärendet',
   FOLLOWS_FLOW: 'Följer flödet',
@@ -211,7 +239,7 @@ export const PROFILSTATUS_NAMN: Record<ProfileStatus, string> = {
   ACTIVE: 'Aktiv',
   ENDED: 'Avslutad',
 };
-export const MALLSTATUS_NAMN: Record<TemplateStatus, string> = {
+export const KONTERINGSSTATUS_NAMN: Record<PostingConfigStatus, string> = {
   DRAFT: 'Utkast',
   ACTIVE: 'Aktiv',
   INACTIVE: 'Inaktiv',
@@ -221,61 +249,70 @@ export const VERSIONSTATUS_NAMN: Record<VersionStatus, string> = {
   UPCOMING: 'Kommande',
   PREVIOUS: 'Tidigare',
 };
+export const SPARRSTATUS_NAMN: Record<BlockStatus, string> = {
+  ONGOING: 'Pågående',
+  UPCOMING: 'Kommande',
+  ENDED: 'Avslutad',
+};
+export const INTEGRATION_NAMN: Record<EconomicSystem['integrationStatus'], string> = {
+  AVAILABLE: 'Integration finns',
+  NOT_AVAILABLE: 'Ingen integration',
+};
+
+const GRA = 'bg-surface-neutral text-on-surface-neutral border border-border';
+const BLA = 'bg-surface-info text-on-surface-info border border-border-info';
+const GRON = 'bg-surface-success text-on-surface-success border border-border-success';
+const DAMPAD = 'bg-surface text-text-muted border border-border';
+const ROD = 'bg-surface-error text-on-surface-error border border-border-error';
 
 /** Statusetiketter: Utkast grå, Planerad blå, Aktiv grön, Avslutad/Inaktiv dämpad. */
 export function profilStatusKlass(s: ProfileStatus): string {
-  switch (s) {
-    case 'DRAFT':
-      return 'bg-surface-neutral text-on-surface-neutral border border-border';
-    case 'PLANNED':
-      return 'bg-surface-info text-on-surface-info border border-border-info';
-    case 'ACTIVE':
-      return 'bg-surface-success text-on-surface-success border border-border-success';
-    case 'ENDED':
-      return 'bg-surface text-text-muted border border-border';
-  }
+  return { DRAFT: GRA, PLANNED: BLA, ACTIVE: GRON, ENDED: DAMPAD }[s];
 }
-export function mallStatusKlass(s: TemplateStatus): string {
-  switch (s) {
-    case 'DRAFT':
-      return 'bg-surface-neutral text-on-surface-neutral border border-border';
-    case 'ACTIVE':
-      return 'bg-surface-success text-on-surface-success border border-border-success';
-    case 'INACTIVE':
-      return 'bg-surface text-text-muted border border-border';
-  }
+export function konteringStatusKlass(s: PostingConfigStatus): string {
+  return { DRAFT: GRA, ACTIVE: GRON, INACTIVE: DAMPAD }[s];
 }
 export function versionStatusKlass(s: VersionStatus): string {
-  switch (s) {
-    case 'CURRENT':
-      return 'bg-surface-success text-on-surface-success border border-border-success';
-    case 'UPCOMING':
-      return 'bg-surface-info text-on-surface-info border border-border-info';
-    case 'PREVIOUS':
-      return 'bg-surface text-text-muted border border-border';
-  }
+  return { CURRENT: GRON, UPCOMING: BLA, PREVIOUS: DAMPAD }[s];
 }
+export function sparrStatusKlass(s: BlockStatus): string {
+  return { ONGOING: ROD, UPCOMING: BLA, ENDED: DAMPAD }[s];
+}
+export function integrationKlass(s: EconomicSystem['integrationStatus']): string {
+  return s === 'AVAILABLE' ? GRON : GRA;
+}
+export const SPARRAD_KLASS = 'bg-error text-on-error border border-error';
 
 /** Begrepp (avsnitt 2) – visas som informationsikon vid rubriker och kolumnrubriker. */
 export const BEGREPP: Record<string, string> = {
   Ekonomisystem: 'Vad ett ekonomisystem kan ta emot. Sätts av utvecklare.',
-  Integrationsprofil: 'Hur en utbetalande organisation konterar i sitt ekonomisystem.',
+  Integrationsprofil:
+    'Hur en utbetalande organisation är kopplad till sitt ekonomisystem: mappning, värdelistor, tekniska egenskaper och spärrar.',
   Mappning:
-    'En rad i profilen: ett attribut kopplat till en Agresso-dimension, med böcker, värdeläge och värdelista.',
+    'En rad i integrationsprofilen: ett attribut kopplat till en dimension, med böcker, värdeläge och värdelista.',
   Attribut: 'Ett konteringsbegrepp, till exempel Verksamhet.',
-  'Agresso-dimension': 'Plats i kodsträngen: DIM1–DIM7, INVOICE_NO, CURRENCY.',
+  Dimension: 'Plats i kodsträngen. I Agresso DIM1–DIM7, INVOICE_NO och CURRENCY.',
   'Bokförs i':
     'Vilka böcker attributet följer med till: Huvudbok (GL), Leverantörsreskontra (AP), Kundreskontra (AR). Flerval.',
-  Värdelista: 'De tillåtna värdena för ett attribut i en profil.',
+  Värdelista: 'De tillåtna värdena för ett attribut i en integrationsprofil.',
   'Värde i kontering':
-    'Hur attributets värde bestäms: Väljs i konteringsmallen, Fast värde, Hämtas från ärendet eller Följer flödet.',
-  Flöde: 'Utbetalning (UTB) eller Inbetalning (INB).',
-  Konteringsmall: 'En namngiven uppsättning valda värden inom en profil, med versioner.',
-  Version:
-    'En konteringsmall har versioner med "giltig från". Den version som gäller på utbetalningsdagen används.',
-  Kodsträng: 'Förhandsvisning av raden som skickas till Agresso, en per bok.',
+    'Hur attributets värde bestäms: Väljs i konteringen, Fast värde, Hämtas från ärendet eller Följer flödet.',
+  Flöde: 'Utbetalning (UTB) eller Inbetalning (INB). Avgör om reskontraraden blir AP eller AR.',
+  'Tekniska egenskaper':
+    'Inställningar för utbetalningsfilen, till exempel vilken Agresso-klient som tar emot den. Sätts av utvecklare.',
+  Spärrperiod: 'En period då utbetalningar via integrationsprofilen är stoppade.',
+  Finansieringsmedel: 'Som idag: anslag, uppdrag, deluppdrag och kontotyp.',
+  'Beslutande organisation': 'Organisationen som beslutar om stödet.',
   'Utbetalande organisation': 'Organisationen som betalar ut och äger integrationsprofilen.',
-  'Beslutande organisation': 'Organisationen som beslutar om stödet. Bara ett informationsfält i prototypen.',
+  Kontering:
+    'De valda värdena för ett finansieringsmedel, en beslutande organisation och ett flöde. Har versioner.',
+  Version:
+    'En kontering har versioner med "giltig från". Den version som gäller på utbetalningsdagen används.',
+  Kodsträng: 'Förhandsvisning av raderna som skickas till Agresso: huvudboksraden och reskontraraden.',
+  Uppslag:
+    'Hur systemet hittar konteringen vid en utbetalning: finansieringsmedel + beslutande organisation + flöde.',
+  Dataläge:
+    'Vilken exempeldata prototypen visar: riktiga exempeldata, eller anonymiserade där myndigheter och regioner har fiktiva namn.',
 };
 
 export const KALLA_TEXT: Record<'example' | 'assumption', { etikett: string; tooltip: string }> = {
@@ -289,6 +326,8 @@ export const KALLA_TEXT: Record<'example' | 'assumption', { etikett: string; too
   },
 };
 
+export const TILLFALLIGT_TIPS = 'Ligger tillfälligt i konteringen. Flyttas senare till stödets klassificering.';
+
 /* ============================================================
    Datum
    ============================================================ */
@@ -301,6 +340,12 @@ function pad2(tal: number): string {
 export function idag(): string {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/** Nu som "yyyy-MM-dd HH:mm" (spärr som startar nu). */
+export function nu(): string {
+  const d = new Date();
+  return `${idag()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 /** Lägger till dagar till ett yyyy-MM-dd-datum. */
@@ -319,7 +364,7 @@ export function giltighetText(fran: string, till: string | null): string {
    ============================================================ */
 
 /** Profilstatus utifrån datum: Planerad → Aktiv när giltig från passerats, → Avslutad när giltig till passerats. */
-export function profilStatus(p: PostingProfile, dag = idag()): ProfileStatus {
+export function profilStatus(p: IntegrationProfile, dag = idag()): ProfileStatus {
   if (p.status === 'DRAFT') return 'DRAFT';
   if (p.validTo && p.validTo < dag) return 'ENDED';
   if (p.status === 'ENDED') return 'ENDED';
@@ -327,39 +372,90 @@ export function profilStatus(p: PostingProfile, dag = idag()): ProfileStatus {
   return 'PLANNED';
 }
 
-export function sorteradeVersioner(t: PostingTemplate): TemplateVersion[] {
-  return [...t.versions].sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+/** Gäller profilen (är aktiv) ett visst datum? */
+export function profilAktivPa(p: IntegrationProfile, datum: string): boolean {
+  return p.status !== 'DRAFT' && p.validFrom <= datum && (!p.validTo || p.validTo >= datum);
 }
 
-/** Gällande: senaste med giltig från ≤ idag. Kommande: giltig från > idag. Tidigare: övriga. */
-export function versionStatus(t: PostingTemplate, v: TemplateVersion, dag = idag()): VersionStatus {
-  if (v.validFrom > dag) return 'UPCOMING';
-  return gallandeVersion(t, dag)?.id === v.id ? 'CURRENT' : 'PREVIOUS';
+export function sparrStatus(s: BlockedPeriod, dag = idag()): BlockStatus {
+  if (s.from.slice(0, 10) > dag) return 'UPCOMING';
+  if (s.to && s.to.slice(0, 10) < dag) return 'ENDED';
+  return 'ONGOING';
 }
 
-export function gallandeVersion(t: PostingTemplate, dag = idag()): TemplateVersion | null {
-  const tidigare = sorteradeVersioner(t).filter((v) => v.validFrom <= dag);
+/** Spärren som gäller ett visst datum, om någon. */
+export function sparrPa(p: IntegrationProfile, datum = idag()): BlockedPeriod | null {
+  return p.blockedPeriods.find((s) => sparrStatus(s, datum) === 'ONGOING') ?? null;
+}
+
+export function sorteradeVersioner(k: PostingConfig): PostingConfigVersion[] {
+  return [...k.versions].sort((a, b) => a.validFrom.localeCompare(b.validFrom));
+}
+
+/** Senaste versionen med giltig från ≤ datum. */
+export function versionPa(k: PostingConfig, datum: string): PostingConfigVersion | null {
+  const tidigare = sorteradeVersioner(k).filter((v) => v.validFrom <= datum);
   return tidigare.length ? tidigare[tidigare.length - 1] : null;
 }
 
-export function kommandeVersioner(t: PostingTemplate, dag = idag()): TemplateVersion[] {
-  return sorteradeVersioner(t).filter((v) => v.validFrom > dag);
+export function gallandeVersion(k: PostingConfig, dag = idag()): PostingConfigVersion | null {
+  return versionPa(k, dag);
+}
+
+/** Gällande: senaste med giltig från ≤ idag. Kommande: giltig från > idag. Tidigare: övriga. */
+export function versionStatus(k: PostingConfig, v: PostingConfigVersion, dag = idag()): VersionStatus {
+  if (v.validFrom > dag) return 'UPCOMING';
+  return gallandeVersion(k, dag)?.id === v.id ? 'CURRENT' : 'PREVIOUS';
+}
+
+export function kommandeVersioner(k: PostingConfig, dag = idag()): PostingConfigVersion[] {
+  return sorteradeVersioner(k).filter((v) => v.validFrom > dag);
 }
 
 /** Gällande och kommande versioner – de som räknas i "Används i" och i varningar. */
-export function relevantaVersioner(t: PostingTemplate, dag = idag()): TemplateVersion[] {
-  const g = gallandeVersion(t, dag);
-  return [...(g ? [g] : []), ...kommandeVersioner(t, dag)];
+export function relevantaVersioner(k: PostingConfig, dag = idag()): PostingConfigVersion[] {
+  const g = gallandeVersion(k, dag);
+  return [...(g ? [g] : []), ...kommandeVersioner(k, dag)];
 }
 
-export function sorteradeMappningar(p: PostingProfile): Mapping[] {
-  return [...p.mappings].sort(
-    (a, b) => KATEGORI_ORDNING.indexOf(a.category) - KATEGORI_ORDNING.indexOf(b.category),
-  );
+/** Sorterar mappningar i ekonomisystemets dimensionsordning. */
+export function sorteraMappningar(mappningar: Mapping[], ordning: Category[]): Mapping[] {
+  const index = (c: Category) => {
+    const i = ordning.indexOf(c);
+    return i < 0 ? ordning.length : i;
+  };
+  return [...mappningar].sort((a, b) => index(a.category) - index(b.category));
 }
 
 export function aktivaVarden(m: Mapping): AllowedValue[] {
   return m.values.filter((v) => v.status === 'ACTIVE');
+}
+
+/** Reskontraboken för ett flöde: AP vid utbetalning, AR vid inbetalning. */
+export function reskontra(flode: Flow): TransactionType {
+  return flode === 'UTB' ? 'AP' : 'AR';
+}
+
+/** Kort form av tillåtna dimensioner, t.ex. "DIM1–DIM7" eller "KODDEL1–KODDEL8". */
+export function kategoriText(k: Category[]): string {
+  const grupper = new Map<string, number[]>();
+  const ovriga: string[] = [];
+  for (const c of k) {
+    const m = /^([A-Z]+)(\d+)$/.exec(c);
+    if (m) grupper.set(m[1], [...(grupper.get(m[1]) ?? []), Number(m[2])]);
+    else ovriga.push(c);
+  }
+  const delar: string[] = [];
+  for (const [prefix, nr] of grupper) {
+    nr.sort((a, b) => a - b);
+    const sammanhangande = nr.every((n, i) => i === 0 || n === nr[i - 1] + 1);
+    delar.push(
+      sammanhangande && nr.length > 2
+        ? `${prefix}${nr[0]}–${prefix}${nr[nr.length - 1]}`
+        : nr.map((n) => `${prefix}${n}`).join(', '),
+    );
+  }
+  return [...delar, ...ovriga].join(', ');
 }
 
 /* ---------- Kodsträng (avsnitt 7.4) ---------- */
@@ -368,17 +464,22 @@ export type KodDel = { dim: Category; varde: string; platshallare: boolean };
 export interface KodRad {
   bok: TransactionType;
   delar: KodDel[];
+  /** "AP: profilen har inte boken AP" eller "AR: inga attribut bokförs i AR" (K10). */
+  varning?: string;
 }
 
 export function kodstrang(
-  profil: PostingProfile,
+  profil: IntegrationProfile,
+  ordning: Category[],
   flode: Flow,
   varden: Record<string, string>,
 ): KodRad[] {
-  const bocker = BOK_ORDNING.filter((b) => profil.transactionTypes.includes(b));
-  return bocker.map((bok) => ({
-    bok,
-    delar: sorteradeMappningar(profil)
+  const bocker: TransactionType[] = ['GL', reskontra(flode)];
+  return bocker.map((bok): KodRad => {
+    if (!profil.transactionTypes.includes(bok)) {
+      return { bok, delar: [], varning: `${bok}: profilen har inte boken ${bok}` };
+    }
+    const delar = sorteraMappningar(profil.mappings, ordning)
       .filter((m) => m.bookIn.includes(bok))
       .map((m): KodDel => {
         switch (m.mode) {
@@ -389,42 +490,36 @@ export function kodstrang(
           case 'FIXED':
             return { dim: m.category, varde: m.fixedValue ?? '‹ej vald›', platshallare: !m.fixedValue };
           case 'FROM_CASE':
-            return {
-              dim: m.category,
-              varde: `‹${ARENDEFALT_NAMN[m.caseField ?? 'CASE_ID']}›`,
-              platshallare: true,
-            };
+            return { dim: m.category, varde: `‹${ARENDEFALT_NAMN[m.caseField ?? 'CASE_ID']}›`, platshallare: true };
           case 'FOLLOWS_FLOW':
             return { dim: m.category, varde: flode, platshallare: false };
         }
-      }),
-  }));
+      });
+    return delar.length ? { bok, delar } : { bok, delar, varning: `${bok}: inga attribut bokförs i ${bok}` };
+  });
 }
 
 /** Kodsträngen som ren text, en rad per bok. */
 export function kodstrangText(rader: KodRad[]): string {
   return rader
-    .map((r) =>
-      r.delar.length
-        ? `${r.bok}: ${r.delar.map((d) => `${d.dim} ${d.varde}`).join(' · ')}`
-        : `${r.bok}: används inte av något attribut`,
-    )
+    .map((r) => r.varning ?? `${r.bok}: ${r.delar.map((d) => `${d.dim} ${d.varde}`).join(' · ')}`)
     .join('\n');
 }
 
 /* ---------- Standardmappning (guiden steg 4 och "Lägg till attribut") ---------- */
 
 /**
- * Förifylld mappning: första lediga tillåtna dimension, Bokförs i GL och läget Väljs i konteringsmallen.
+ * Förifylld mappning: första lediga tillåtna dimension, Bokförs i GL och läget Väljs i konteringen.
  * Undantag: Ärende-id och Motpart hämtas från ärendet, Valuta får fast värde SEK och Aktivitet följer flödet.
  */
 export function standardMappning(
   attribut: SystemAttribute,
+  ordning: Category[],
   upptagna: Category[],
   bocker: TransactionType[],
 ): Mapping {
   const kategori =
-    KATEGORI_ORDNING.find((k) => attribut.allowedCategories.includes(k) && !upptagna.includes(k)) ??
+    ordning.find((k) => attribut.allowedCategories.includes(k) && !upptagna.includes(k)) ??
     attribut.allowedCategories[0];
   const bookIn: TransactionType[] = bocker.includes('GL') ? ['GL'] : bocker.slice(0, 1);
   const bas = { attributeId: attribut.id, category: kategori, bookIn, values: [] as AllowedValue[] };
@@ -457,12 +552,12 @@ export function standardMappning(
 /** Fel för en mappning (P3–P7) i en profil. */
 export function mappningsfel(
   m: Mapping,
-  profil: Pick<PostingProfile, 'mappings' | 'transactionTypes'>,
+  profil: Pick<IntegrationProfile, 'mappings' | 'transactionTypes'>,
   attribut: SystemAttribute | null,
   attributNamn: string,
 ): string[] {
   const fel: string[] = [];
-  if (!m.category) fel.push(`${attributNamn}: Välj en Agresso-dimension.`);
+  if (!m.category) fel.push(`${attributNamn}: Välj en dimension.`);
   else if (profil.mappings.some((x) => x.attributeId !== m.attributeId && x.category === m.category))
     fel.push(`${attributNamn}: ${m.category} används redan av ett annat attribut i profilen.`);
   if (attribut && m.category && !attribut.allowedCategories.includes(m.category))

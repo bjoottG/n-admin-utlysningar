@@ -13,7 +13,7 @@ const OMRADEN: Omrade[] = [
   {
     titel: 'Ekonomisk integration (NY)',
     beskrivning:
-      'Ny modell för konteringar mot Agresso: ekonomisystem, integrationsprofiler per utbetalande organisation och konteringsmallar med versioner.',
+      'Ny ekonomisk integration: ekonomisystem, integrationsprofiler per utbetalande organisation och konteringar med versioner.',
     lank: '/ekonomisk-integration-ny',
   },
   {

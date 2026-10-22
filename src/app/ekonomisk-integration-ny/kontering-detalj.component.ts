@@ -16,29 +16,30 @@ import {
 import {
   ARENDEFALT_NAMN,
   FLODE_NAMN,
-  MALLSTATUS_NAMN,
-  PostingProfile,
-  PostingTemplate,
-  TemplateVersion,
+  IntegrationProfile,
+  KONTERINGSSTATUS_NAMN,
+  PostingConfig,
+  PostingConfigVersion,
+  TILLFALLIGT_TIPS,
   URSPRUNG_NAMN,
   VERSIONSTATUS_NAMN,
   aktivaVarden,
   gallandeVersion,
   idag,
-  kodstrang,
-  mallStatusKlass,
+  konteringStatusKlass,
   profilStatus,
   relevantaVersioner,
-  sorteradeMappningar,
   sorteradeVersioner,
   versionStatus,
   versionStatusKlass,
 } from './ei-modell';
 import { EkonomiskIntegrationService, nyttId } from './ei.service';
-import { EiVardefaltComponent, EiVidUtbetalningComponent } from './mall-delar';
+import { EiKonsumtionskontoComponent, EiVardefaltComponent, EiVidUtbetalningComponent } from './kontering-delar';
+import { EiTestaUppslagComponent } from './testa-uppslag.component';
 
 interface VardeRad {
   attribut: string;
+  kategori: string;
   varde: string;
   platshallare: boolean;
   ursprung: string;
@@ -47,8 +48,15 @@ interface VardeRad {
   namnSaknas?: boolean;
 }
 
+interface NyVersion {
+  validFrom: string;
+  changeReason: string;
+  values: Record<string, string>;
+  useConsumptionAccount: boolean;
+}
+
 @Component({
-  selector: 'app-ei-mall-detalj',
+  selector: 'app-ei-kontering-detalj',
   imports: [
     FormsModule,
     RouterLink,
@@ -61,31 +69,29 @@ interface VardeRad {
     EiNotisComponent,
     EiVardefaltComponent,
     EiVidUtbetalningComponent,
+    EiKonsumtionskontoComponent,
+    EiTestaUppslagComponent,
   ],
   template: `
-    @if (mall(); as t) {
+    @if (kontering(); as t) {
       @let p = profil()!;
-      <app-ei-ram flik="mallar" [brodsmulor]="[{ text: t.name }]">
+      @let fm = service.hamtaFinansieringsmedel(t.fundingSourceId);
+      <app-ei-ram flik="konteringar" [brodsmulor]="[{ text: namn() }]">
         <!-- Sidhuvud -->
         <div class="flex items-start justify-between gap-4 flex-wrap mb-4">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-xl font-semibold text-text">{{ t.name }}</h2>
-              <span [class]="k.status + ' ' + statusKlass(t)">{{ statusNamn[t.status] }}</span>
-              <app-ei-kalla [kalla]="t.source" />
-            </div>
-            <dl class="flex flex-wrap gap-x-6 gap-y-1 mt-1.5 text-sm">
-              <div><dt class="inline text-text-muted mr-1">Integrationsprofil:</dt><dd class="inline"><a [routerLink]="bas + '/integrationsprofiler/' + p.id" [class]="k.lank">{{ p.name }}</a></dd></div>
-              <div><dt class="inline text-text-muted mr-1">Utbetalande organisation:</dt><dd class="inline">{{ service.hamtaOrg(p.organisationId)?.name }}</dd></div>
-              <div><dt class="inline text-text-muted mr-1">Flöde:</dt><dd class="inline">{{ flodeNamn[t.flow] }} ({{ t.flow }})</dd></div>
-              <div><dt class="inline text-text-muted mr-1">Avsedd för:</dt><dd class="inline">{{ avseddFor() }}</dd></div>
-            </dl>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-xl font-semibold text-text">{{ namn() }}</h2>
+            <span [class]="k.status + ' ' + statusKlass(t)">{{ statusNamn[t.status] }}</span>
+            <app-ei-kalla [kalla]="t.source" />
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <button type="button" (click)="oppnaNyVersion()" [class]="k.primar">
               <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Ny version
             </button>
-            <a [routerLink]="bas + '/konteringsmallar/ny'" [queryParams]="{ kopiaAv: t.id }" [class]="k.sekundarLiten">
+            <button type="button" (click)="uppslagOppen.set(true)" [class]="k.sekundarLiten">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">search</span>Testa uppslag
+            </button>
+            <a [routerLink]="bas + '/konteringar/ny'" [queryParams]="{ kopiaAv: t.id }" [class]="k.sekundarLiten">
               <span class="material-symbols-outlined text-[18px]" aria-hidden="true">content_copy</span>Skapa kopia
             </a>
             @if (t.status === 'ACTIVE') {
@@ -109,6 +115,51 @@ interface VardeRad {
         }
 
         <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-5">
+          <!-- Nyckel -->
+          <section class="bg-surface border border-border">
+            <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">
+              Nyckel <app-ei-begrepp term="Uppslag" />
+              <span class="ml-auto inline-flex items-center gap-1 text-[12px] font-normal text-text-muted">
+                <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>Kan inte ändras
+              </span>
+            </h3>
+            <dl class="grid grid-cols-[180px_1fr] gap-x-4 gap-y-2 px-5 py-3 text-sm">
+              <dt class="text-text-muted inline-flex items-center gap-1">Finansieringsmedel <app-ei-begrepp term="Finansieringsmedel" /></dt>
+              <dd>
+                <span class="font-medium">{{ fm?.shortName }}</span> <app-ei-kalla [kalla]="fm?.source" />
+                <span class="block text-text-secondary">Anslag: {{ fm?.anslag }}</span>
+                <span class="block text-text-secondary">Uppdrag: {{ fm?.uppdrag }}</span>
+                @if (fm?.deluppdrag) { <span class="block text-text-secondary">Deluppdrag: {{ fm!.deluppdrag }}</span> }
+                <span class="block text-text-secondary">Kontotyp: {{ fm?.kontotyp ?? 'saknas' }}</span>
+              </dd>
+              <dt class="text-text-muted inline-flex items-center gap-1">Beslutande organisation <app-ei-begrepp term="Beslutande organisation" /></dt>
+              <dd>{{ service.hamtaBeslutande(t.decidingOrganisationId)?.name }}</dd>
+              <dt class="text-text-muted inline-flex items-center gap-1">Flöde <app-ei-begrepp term="Flöde" /></dt>
+              <dd>{{ flodeNamn[t.flow] }} ({{ t.flow }})</dd>
+            </dl>
+            <p class="px-5 pb-3 text-[13px] text-text-muted">
+              Vill du använda värdena för en annan beslutande organisation?
+              <a [routerLink]="bas + '/konteringar/ny'" [queryParams]="{ kopiaAv: t.id }" [class]="k.lank">Skapa en kopia.</a>
+            </p>
+          </section>
+
+          <!-- Integrationsprofil och beskrivning -->
+          <section class="bg-surface border border-border">
+            <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">Integrationsprofil <app-ei-begrepp term="Integrationsprofil" /></h3>
+            <dl class="grid grid-cols-[180px_1fr] gap-x-4 gap-y-2 px-5 py-3 text-sm">
+              <dt class="text-text-muted">Integrationsprofil</dt>
+              <dd><a [routerLink]="bas + '/integrationsprofiler/' + p.id" [class]="k.lank">{{ p.name }}</a></dd>
+              <dt class="text-text-muted">Utbetalande organisation</dt>
+              <dd>{{ service.hamtaOrg(p.organisationId)?.name }}</dd>
+              <dt class="text-text-muted">Ekonomisystem</dt>
+              <dd>{{ service.systemNamn(p) }}</dd>
+              @if (t.description) {
+                <dt class="text-text-muted">Beskrivning</dt>
+                <dd>{{ t.description }}</dd>
+              }
+            </dl>
+          </section>
+
           <!-- Versioner -->
           <section class="bg-surface border border-border xl:col-span-2">
             <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">Versioner <app-ei-begrepp term="Version" /></h3>
@@ -152,37 +203,45 @@ interface VardeRad {
                 </tbody>
               </table>
             </div>
+            <p class="px-5 py-2.5 text-[13px] text-text-muted">Gällande och tidigare versioner kan inte tas bort. Den version som gäller på utbetalningsdagen används.</p>
           </section>
 
           @if (valdVersion(); as v) {
             <!-- Värden för vald version -->
             <section class="bg-surface border border-border">
               <h3 class="px-5 py-3 text-base font-semibold border-b border-border-muted">Värden, version {{ v.validFrom }}</h3>
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-border">
-                    <th scope="col" [class]="k.th + ' pl-5'">Attribut</th>
-                    <th scope="col" [class]="k.th">Värde</th>
-                    <th scope="col" [class]="k.th">Ursprung</th>
-                    <th scope="col" [class]="k.th + ' pr-5'"><span class="inline-flex items-center gap-1">Bokförs i <app-ei-begrepp term="Bokförs i" /></span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (r of vardeRader(); track r.attribut) {
-                    <tr class="border-b border-border-muted odd:bg-surface-subtle">
-                      <td class="pl-5 pr-4 py-2 font-medium">{{ r.attribut }}</td>
-                      <td class="px-4 py-2" [class]="r.platshallare ? 'italic text-text-muted' : ''">
-                        {{ r.varde }}@if (r.namnSaknas) {<span class="text-text-muted"> · Namn saknas</span>}
-                        @if (r.inaktivt) { <span class="ml-1 text-[12px] text-warning-dark">(inaktivt)</span> }
-                      </td>
-                      <td class="px-4 py-2 text-text-secondary">{{ r.ursprung }}</td>
-                      <td class="pl-4 pr-5 py-2">
-                        <span class="inline-flex gap-1">@for (b of r.bokforsI; track b) { <span [class]="k.chip">{{ b }}</span> }</span>
-                      </td>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-border">
+                      <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
+                      <th scope="col" [class]="k.th">Värde</th>
+                      <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Ursprung <app-ei-begrepp term="Värde i kontering" /></span></th>
+                      <th scope="col" [class]="k.th + ' pr-5'"><span class="inline-flex items-center gap-1">Bokförs i <app-ei-begrepp term="Bokförs i" /></span></th>
                     </tr>
-                  }
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    @for (r of vardeRader(); track r.attribut) {
+                      <tr class="border-b border-border-muted odd:bg-surface-subtle">
+                        <td class="pl-5 pr-4 py-2 font-medium">{{ r.attribut }} <span class="font-mono text-[11px] font-normal text-text-muted">{{ r.kategori }}</span></td>
+                        <td class="px-4 py-2" [class]="r.platshallare ? 'italic text-text-muted' : ''">
+                          {{ r.varde }}@if (r.namnSaknas) {<span class="text-text-muted"> · Namn saknas</span>}
+                          @if (r.inaktivt) { <span class="ml-1 text-[12px] text-warning-dark">(inaktivt)</span> }
+                        </td>
+                        <td class="px-4 py-2 text-text-secondary">{{ r.ursprung }}</td>
+                        <td class="pl-4 pr-5 py-2">
+                          <span class="inline-flex gap-1">@for (b of r.bokforsI; track b) { <span [class]="k.chip">{{ b }}</span> }</span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="flex items-center gap-1.5 flex-wrap px-5 py-3 text-sm border-t border-border-muted">
+                Använd konsumtionskonto (tillfälligt): <span class="font-medium">{{ v.useConsumptionAccount ? 'Ja' : 'Nej' }}</span>
+                <app-ei-kalla [kalla]="v.useConsumptionAccountSource" />
+                <span class="text-[13px] text-text-muted" [title]="tillfalligtTips">· {{ fm?.kontotyp ? 'Finansieringsmedlets kontotyp: ' + fm!.kontotyp : 'Finansieringsmedlet saknar kontotyp' }}</span>
+              </p>
             </section>
 
             <div class="space-y-5">
@@ -200,9 +259,9 @@ interface VardeRad {
                 </section>
               }
 
-              <app-ei-vid-utbetalning [profil]="p" [finansieringsmedelId]="t.intendedFor.fundingSourceId" [gammalt]="t.legacyConsumptionAccount" />
+              <app-ei-vid-utbetalning [profil]="p" />
 
-              <app-ei-kodstrang [rader]="kodrader()" />
+              <app-ei-kodstrang [rader]="kodrader()" [system]="service.systemNamn(p)" />
             </div>
           }
         </div>
@@ -211,7 +270,10 @@ interface VardeRad {
       <!-- Ny version -->
       @if (nyVersion(); as nv) {
         <app-ei-dialog rubrik="Ny version" bredd="max-w-[760px]" (stang)="nyVersion.set(null)">
-          <p class="text-sm text-text-secondary">Värdena är förifyllda från {{ gallande() ? 'gällande version' : 'senaste versionen' }}. Den version som gäller på utbetalningsdagen används.</p>
+          <p class="text-sm text-text-secondary">
+            Värdena är förifyllda från {{ gallande() ? 'gällande version' : 'senaste versionen' }}. Den version som gäller på utbetalningsdagen används,
+            så den nya versionen påverkar utbetalningar från och med giltig från.
+          </p>
           <div class="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">
             <div>
               <label for="ei-nv-fran" [class]="k.etikett">Giltig från <span class="text-error" aria-hidden="true">*</span></label>
@@ -223,6 +285,7 @@ interface VardeRad {
             </div>
           </div>
           <app-ei-vardefalt [profil]="p" [values]="nv.values" (valuesChange)="sattNyVersion({ values: $event })" [visaFel]="forsokSpara() && t.status === 'ACTIVE'" idPrefix="ei-nv-" />
+          <app-ei-konsumtionskonto [varde]="nv.useConsumptionAccount" (vardeChange)="sattNyVersion({ useConsumptionAccount: $event })" [finansieringsmedelId]="t.fundingSourceId" />
           @if (forsokSpara() && nyVersionFel().length) {
             <ul class="space-y-1 list-none m-0 p-0" role="alert">
               @for (f of nyVersionFel(); track f) {
@@ -235,7 +298,7 @@ interface VardeRad {
         </app-ei-dialog>
       }
 
-      <!-- Ta bort version -->
+      <!-- Ta bort version (K6) -->
       @if (taBortVersion(); as v) {
         <app-ei-dialog rubrik="Ta bort versionen?" roll="alertdialog" (stang)="taBortVersion.set(null)">
           <p class="text-sm text-text">Den kommande versionen med giltig från {{ v.validFrom }} tas bort.</p>
@@ -244,9 +307,9 @@ interface VardeRad {
         </app-ei-dialog>
       }
 
-      <!-- Kan inte aktiveras (M2) -->
+      <!-- Kan inte aktiveras (K3) -->
       @if (aktiveringsfel(); as fel) {
-        <app-ei-dialog rubrik="Konteringsmallen kan inte aktiveras" roll="alertdialog" (stang)="aktiveringsfel.set(null)">
+        <app-ei-dialog rubrik="Konteringen kan inte aktiveras" roll="alertdialog" (stang)="aktiveringsfel.set(null)">
           <ul class="space-y-2 list-none m-0 p-0">
             @for (f of fel; track f.text) {
               <li [class]="k.fel + ' text-sm items-start'">
@@ -263,42 +326,50 @@ interface VardeRad {
           <button fot type="button" (click)="aktiveringsfel.set(null)" [class]="k.sekundar">Stäng</button>
         </app-ei-dialog>
       }
+
+      @if (uppslagOppen()) {
+        <app-ei-testa-uppslag [start]="{ fundingSourceId: t.fundingSourceId, decidingOrganisationId: t.decidingOrganisationId, flow: t.flow }" (stang)="uppslagOppen.set(false)" />
+      }
     } @else {
-      <app-ei-ram flik="mallar" [brodsmulor]="[{ text: 'Hittades inte' }]">
-        <p class="text-sm text-text-muted">Konteringsmallen finns inte.</p>
+      <app-ei-ram flik="konteringar" [brodsmulor]="[{ text: 'Hittades inte' }]">
+        <p class="text-sm text-text-muted">Konteringen finns inte.</p>
       </app-ei-ram>
     }
   `,
 })
-export class EiMallDetaljComponent {
+export class EiKonteringDetaljComponent {
   readonly service = inject(EkonomiskIntegrationService);
   private readonly route = inject(ActivatedRoute);
   readonly k = K;
   readonly bas = EI_BAS;
   readonly flodeNamn = FLODE_NAMN;
-  readonly statusNamn = MALLSTATUS_NAMN;
+  readonly statusNamn = KONTERINGSSTATUS_NAMN;
   readonly versionNamn = VERSIONSTATUS_NAMN;
   readonly versionStatus = versionStatus;
   readonly versionKlass = versionStatusKlass;
+  readonly tillfalligtTips = TILLFALLIGT_TIPS;
+
+  readonly uppslagOppen = signal(false);
 
   private readonly params = toSignal(this.route.paramMap, { requireSync: true });
-  readonly mall = computed(() => this.service.hamtaMall(this.params().get('id')));
-  readonly profil = computed<PostingProfile | null>(() => this.service.hamtaProfil(this.mall()?.profileId ?? null));
-  readonly versioner = computed(() => (this.mall() ? sorteradeVersioner(this.mall()!).reverse() : []));
-  readonly gallande = computed(() => (this.mall() ? gallandeVersion(this.mall()!) : null));
-  readonly varningar = computed(() => (this.mall() ? this.service.mallVarningar(this.mall()!) : []));
+  readonly kontering = computed(() => this.service.hamtaKontering(this.params().get('id')));
+  readonly profil = computed<IntegrationProfile | null>(() => this.service.hamtaProfil(this.kontering()?.profileId ?? null));
+  readonly namn = computed(() => (this.kontering() ? this.service.konteringNamn(this.kontering()!) : ''));
+  readonly versioner = computed(() => (this.kontering() ? sorteradeVersioner(this.kontering()!).reverse() : []));
+  readonly gallande = computed(() => (this.kontering() ? gallandeVersion(this.kontering()!) : null));
+  readonly varningar = computed(() => (this.kontering() ? this.service.konteringVarningar(this.kontering()!) : []));
 
   readonly valdVersionId = signal<string | null>(null);
-  readonly valdVersion = computed<TemplateVersion | null>(() => {
-    const t = this.mall();
+  readonly valdVersion = computed<PostingConfigVersion | null>(() => {
+    const t = this.kontering();
     if (!t) return null;
     return (
       t.versions.find((v) => v.id === this.valdVersionId()) ?? this.gallande() ?? sorteradeVersioner(t).slice(-1)[0] ?? null
     );
   });
 
-  readonly foregaende = computed<TemplateVersion | null>(() => {
-    const t = this.mall();
+  readonly foregaende = computed<PostingConfigVersion | null>(() => {
+    const t = this.kontering();
     const v = this.valdVersion();
     if (!t || !v) return null;
     const lista = sorteradeVersioner(t);
@@ -312,20 +383,30 @@ export class EiMallDetaljComponent {
     const f = this.foregaende();
     if (!p || !v || !f) return [];
     const attribut = [...new Set([...Object.keys(f.values), ...Object.keys(v.values)])];
-    const ordning = sorteradeMappningar(p).map((m) => m.attributeId);
+    const ordning = this.service.sorteradeMappningar(p).map((m) => m.attributeId);
     attribut.sort((a, b) => ordning.indexOf(a) - ordning.indexOf(b));
-    return attribut
+    const ut = attribut
       .filter((a) => (f.values[a] ?? '') !== (v.values[a] ?? ''))
       .map((a) => `${this.service.attributNamn(p, a)}: ${f.values[a] || '–'} → ${v.values[a] || '–'}`);
+    if (f.useConsumptionAccount !== v.useConsumptionAccount) {
+      ut.push(`Använd konsumtionskonto: ${f.useConsumptionAccount ? 'Ja' : 'Nej'} → ${v.useConsumptionAccount ? 'Ja' : 'Nej'}`);
+    }
+    return ut;
   });
 
   readonly vardeRader = computed<VardeRad[]>(() => {
     const p = this.profil();
-    const t = this.mall();
+    const t = this.kontering();
     const v = this.valdVersion();
     if (!p || !t || !v) return [];
-    return sorteradeMappningar(p).map((m) => {
-      const bas = { attribut: this.service.attributNamn(p, m.attributeId), ursprung: URSPRUNG_NAMN[m.mode], bokforsI: m.bookIn, inaktivt: false };
+    return this.service.sorteradeMappningar(p).map((m) => {
+      const bas = {
+        attribut: this.service.attributNamn(p, m.attributeId),
+        kategori: m.category,
+        ursprung: URSPRUNG_NAMN[m.mode],
+        bokforsI: m.bookIn,
+        inaktivt: false,
+      };
       switch (m.mode) {
         case 'SELECTABLE': {
           const kod = v.values[m.attributeId];
@@ -351,23 +432,13 @@ export class EiMallDetaljComponent {
 
   readonly kodrader = computed(() => {
     const p = this.profil();
-    const t = this.mall();
+    const t = this.kontering();
     const v = this.valdVersion();
-    return p && t && v ? kodstrang(p, t.flow, v.values) : [];
+    return p && t && v ? this.service.kodstrang(p, t.flow, v.values) : [];
   });
 
-  avseddFor(): string {
-    const t = this.mall();
-    if (!t) return '–';
-    const delar = [
-      this.service.hamtaFinansieringsmedel(t.intendedFor.fundingSourceId)?.anslag,
-      this.service.hamtaBeslutande(t.intendedFor.decidingOrganisationId)?.name,
-    ].filter(Boolean);
-    return delar.length ? delar.join(' · ') : '–';
-  }
-
-  statusKlass(t: PostingTemplate): string {
-    return mallStatusKlass(t.status);
+  statusKlass(t: PostingConfig): string {
+    return konteringStatusKlass(t.status);
   }
 
   /* ---------- Status ---------- */
@@ -375,11 +446,15 @@ export class EiMallDetaljComponent {
   readonly aktiveringsfel = signal<{ text: string; attribut?: string }[] | null>(null);
 
   aktivera(): void {
-    const t = this.mall();
+    const t = this.kontering();
     const p = this.profil();
     if (!t || !p) return;
     const fel: { text: string; attribut?: string }[] = [];
     if (profilStatus(p) === 'ENDED') fel.push({ text: `Integrationsprofilen ${p.name} är avslutad.` });
+    const dubblett = this.service.hittaDubblett(t, t.id);
+    if (dubblett) {
+      fel.push({ text: `Det finns redan en kontering för ${this.service.konteringNamn(dubblett)} (K2).` });
+    }
     const versioner = relevantaVersioner(t);
     for (const v of versioner.length ? versioner : sorteradeVersioner(t).slice(-1)) {
       for (const m of p.mappings.filter((x) => x.mode === 'SELECTABLE')) {
@@ -387,7 +462,7 @@ export class EiMallDetaljComponent {
         if (kod && aktivaVarden(m).some((x) => x.code === kod)) continue;
         const namn = this.service.attributNamn(p, m.attributeId);
         const text = !aktivaVarden(m).length
-          ? `${namn} saknar värde i versionen ${v.validFrom}. Värdelistan för ${namn} i integrationsprofilen har inga aktiva värden, så inget värde kan väljas.`
+          ? `${namn} saknar värde i versionen ${v.validFrom}. Värdelistan för ${namn} i integrationsprofilen har inga aktiva värden, så inget värde kan väljas. Lägg till värden i integrationsprofilen först.`
           : kod
             ? `${namn} ${kod} i versionen ${v.validFrom} är inaktivt. Skapa en ny version med ett aktivt värde.`
             : `${namn} saknar värde i versionen ${v.validFrom}. Alla valbara fält måste ha ett värde.`;
@@ -401,34 +476,39 @@ export class EiMallDetaljComponent {
     this.sattStatus('ACTIVE');
   }
 
-  sattStatus(status: PostingTemplate['status']): void {
-    const t = this.mall();
+  sattStatus(status: PostingConfig['status']): void {
+    const t = this.kontering();
     if (!t) return;
-    this.service.sparaMall({ ...t, status }, status === 'ACTIVE' ? 'Konteringsmallen är aktiverad.' : 'Konteringsmallen är inaktiverad.');
+    this.service.sparaKontering({ ...t, status }, status === 'ACTIVE' ? 'Konteringen är aktiverad.' : 'Konteringen är inaktiverad.');
   }
 
   /* ---------- Versioner ---------- */
 
-  readonly nyVersion = signal<{ validFrom: string; changeReason: string; values: Record<string, string> } | null>(null);
+  readonly nyVersion = signal<NyVersion | null>(null);
   readonly forsokSpara = signal(false);
-  readonly taBortVersion = signal<TemplateVersion | null>(null);
+  readonly taBortVersion = signal<PostingConfigVersion | null>(null);
 
   oppnaNyVersion(): void {
-    const t = this.mall();
+    const t = this.kontering();
     if (!t) return;
     const bas = this.gallande() ?? sorteradeVersioner(t).slice(-1)[0];
     this.forsokSpara.set(false);
-    this.nyVersion.set({ validFrom: '', changeReason: '', values: { ...(bas?.values ?? {}) } });
+    this.nyVersion.set({
+      validFrom: '',
+      changeReason: '',
+      values: { ...(bas?.values ?? {}) },
+      useConsumptionAccount: bas?.useConsumptionAccount ?? false,
+    });
   }
 
-  sattNyVersion(andring: Partial<{ validFrom: string; changeReason: string; values: Record<string, string> }>): void {
+  sattNyVersion(andring: Partial<NyVersion>): void {
     this.nyVersion.update((n) => (n ? { ...n, ...andring } : n));
   }
 
-  /** M3, M4, inaktiva värden och (för aktiva mallar) M2. */
+  /** K4, K5, inaktiva värden och (för aktiva konteringar) K3. */
   readonly nyVersionFel = computed(() => {
     const n = this.nyVersion();
-    const t = this.mall();
+    const t = this.kontering();
     const p = this.profil();
     if (!n || !t || !p) return [];
     const fel: string[] = [];
@@ -441,7 +521,7 @@ export class EiMallDetaljComponent {
       const kod = n.values[m.attributeId];
       const namn = this.service.attributNamn(p, m.attributeId);
       if (kod && !aktivaVarden(m).some((v) => v.code === kod)) fel.push(`${namn}: ${kod} är inaktivt och kan inte väljas i en ny version.`);
-      else if (!kod && t.status === 'ACTIVE') fel.push(`${namn}: Välj ett värde. Konteringsmallen är aktiv.`);
+      else if (!kod && t.status === 'ACTIVE') fel.push(`${namn}: Välj ett värde. Konteringen är aktiv.`);
     }
     return fel;
   });
@@ -449,29 +529,30 @@ export class EiMallDetaljComponent {
   sparaNyVersion(): void {
     this.forsokSpara.set(true);
     const n = this.nyVersion();
-    const t = this.mall();
+    const t = this.kontering();
     const p = this.profil();
     if (!n || !t || !p || this.nyVersionFel().length) return;
     const valbara = new Set(p.mappings.filter((m) => m.mode === 'SELECTABLE').map((m) => m.attributeId));
     const values = Object.fromEntries(Object.entries(n.values).filter(([a, kod]) => kod && valbara.has(a)));
-    const v: TemplateVersion = {
+    const v: PostingConfigVersion = {
       id: nyttId('v'),
       validFrom: n.validFrom,
       changeReason: n.changeReason.trim(),
       createdAt: idag(),
       values,
+      useConsumptionAccount: n.useConsumptionAccount,
       source: 'underlag',
     };
-    this.service.sparaMall({ ...t, versions: [...t.versions, v] }, `Versionen från ${v.validFrom} har sparats.`);
+    this.service.sparaKontering({ ...t, versions: [...t.versions, v] }, `Versionen från ${v.validFrom} har sparats.`);
     this.valdVersionId.set(v.id);
     this.nyVersion.set(null);
   }
 
-  bekraftaTaBortVersion(v: TemplateVersion): void {
-    const t = this.mall();
+  bekraftaTaBortVersion(v: PostingConfigVersion): void {
+    const t = this.kontering();
     this.taBortVersion.set(null);
-    if (!t || versionStatus(t, v) !== 'UPCOMING') return; // M5
-    this.service.sparaMall({ ...t, versions: t.versions.filter((x) => x.id !== v.id) }, 'Versionen har tagits bort.');
+    if (!t || versionStatus(t, v) !== 'UPCOMING') return; // K6
+    this.service.sparaKontering({ ...t, versions: t.versions.filter((x) => x.id !== v.id) }, 'Versionen har tagits bort.');
     if (this.valdVersionId() === v.id) this.valdVersionId.set(null);
   }
 }

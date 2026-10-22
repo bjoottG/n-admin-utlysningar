@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { anonymiseraOmAktivt } from '../delade/datalage';
 
 /* ============================================================
    Värdeförråd
@@ -10,7 +11,7 @@ export interface Organisation {
 }
 
 /** Utbetalande och beslutande organisation delar samma värdeförråd. */
-export const ORGANISATIONER: Organisation[] = [
+export const ORGANISATIONER: Organisation[] = anonymiseraOmAktivt<Organisation[]>([
   { kod: 'LIV', namn: 'Livsmedelsverket' },
   { kod: 'LST-K', namn: 'Länsstyrelsen i Blekinge län' },
   { kod: 'LST-W', namn: 'Länsstyrelsen i Dalarnas län' },
@@ -57,7 +58,7 @@ export const ORGANISATIONER: Organisation[] = [
   { kod: 'REGE', namn: 'Region Östergötland' },
   { kod: 'TVV', namn: 'Tillväxtverket' },
   { kod: 'REGO', namn: 'Västra Götalandsregionen' },
-];
+]);
 
 export interface Kodvarde {
   /** Nummer i statsbudgeten, t.ex. "19", "19.1.1" eller "19.1.1.24.1". */
@@ -249,7 +250,7 @@ export function konteringEtikett(k: Kontering | undefined): string {
 
 const UO = (kod: string, namn: string) => `${kod}|${namn}`;
 
-const FINANSIELLA_KALLOR: FinansiellKalla[] = [
+const FINANSIELLA_KALLOR: FinansiellKalla[] = anonymiseraOmAktivt<FinansiellKalla[]>([
   { id: 1, namn: 'ERUF 2021–2027', utgiftsomrade: UO('19', 'Regional utveckling'), anslag: '19.1.3', anslagspost: '19.1.3.1', status: 'Aktiv' },
   { id: 2, namn: 'Regionala utvecklingsåtgärder – Tillväxtverket', utgiftsomrade: UO('19', 'Regional utveckling'), anslag: '19.1.1', anslagspost: '19.1.1.24.1', status: 'Aktiv' },
   { id: 3, namn: 'Näringslivsutveckling', utgiftsomrade: UO('24', 'Näringsliv'), anslag: '24.1.5', anslagspost: '24.1.5.8', status: 'Aktiv' },
@@ -257,17 +258,17 @@ const FINANSIELLA_KALLOR: FinansiellKalla[] = [
   { id: 5, namn: 'Transportbidrag', utgiftsomrade: UO('19', 'Regional tillväxt'), anslag: '19.1.2', anslagspost: '', status: 'Aktiv' },
   { id: 6, namn: 'Livsmedelssektorn', utgiftsomrade: UO('23', 'Areella näringar, landsbygd och livsmedel'), anslag: '', anslagspost: '', status: 'Aktiv' },
   { id: 7, namn: 'Korttidsarbete 2020', utgiftsomrade: UO('24', 'Näringsliv'), anslag: '24.1.22', anslagspost: '24.1.22.1', status: 'Inaktiv' },
-];
+]);
 
-const KONTERINGAR: Kontering[] = [
+const KONTERINGAR: Kontering[] = anonymiseraOmAktivt<Kontering[]>([
   { id: 1, finanskod: '1010', kostnadsstalle: '4200', verksamhetskod: '6110' },
   { id: 2, finanskod: '1020', kostnadsstalle: '4210', verksamhetskod: '6120' },
   { id: 3, finanskod: '2030', kostnadsstalle: '5100', verksamhetskod: '' },
   { id: 4, finanskod: '3040', kostnadsstalle: '', verksamhetskod: '7100' },
   { id: 5, finanskod: '1030', kostnadsstalle: '4300', verksamhetskod: '6130' },
-];
+]);
 
-const FINANSIERINGAR: Finansiering[] = [
+const FINANSIERINGAR: Finansiering[] = anonymiseraOmAktivt<Finansiering[]>([
   { id: 1, namn: 'ERUF Övre Norrland', beskrivning: 'Medel från Europeiska regionala utvecklingsfonden för programområdet Övre Norrland, programperiod 2021–2027.', finansiellKallaId: 1, utbetalandeOrganisation: 'TVV', beslutandeOrganisation: 'TVV', konteringId: 1, status: 'Aktiv' },
   { id: 2, namn: 'Regionalt investeringsstöd Norrbotten', beskrivning: 'Nationella regionala utvecklingsmedel som beslutas av regionen och betalas ut av Tillväxtverket.', finansiellKallaId: 2, utbetalandeOrganisation: 'TVV', beslutandeOrganisation: 'REGBD', konteringId: 2, status: 'Aktiv' },
   { id: 3, namn: 'Transportbidrag Norrland', beskrivning: 'Kompensation för kostnadsnackdelar vid långa transporter i de fyra nordligaste länen.', finansiellKallaId: 5, utbetalandeOrganisation: 'TVV', beslutandeOrganisation: 'TVV', konteringId: null, status: 'Aktiv' },
@@ -275,7 +276,7 @@ const FINANSIERINGAR: Finansiering[] = [
   { id: 5, namn: 'ISF projektstöd', beskrivning: 'Projektstöd inom Inre säkerhetsfonden 2021–2027.', finansiellKallaId: 4, utbetalandeOrganisation: 'POL', beslutandeOrganisation: 'POL', konteringId: 4, status: 'Aktiv' },
   { id: 6, namn: 'Korttidsstöd 2020', beskrivning: 'Stöd vid korttidsarbete under pandemin. Avslutat.', finansiellKallaId: 7, utbetalandeOrganisation: 'TVV', beslutandeOrganisation: 'TVV', konteringId: 5, status: 'Inaktiv' },
   { id: 7, namn: 'Landsbygdsstöd kommuner', beskrivning: 'Under uppsättning – finansiell källa och kontering saknas ännu.', finansiellKallaId: null, utbetalandeOrganisation: '', beslutandeOrganisation: '', konteringId: null, status: 'Aktiv' },
-];
+]);
 
 /* ============================================================
    Service

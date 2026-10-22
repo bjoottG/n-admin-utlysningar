@@ -2,17 +2,22 @@ import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { EI_BAS, EiBegreppComponent, EiKallaComponent, EiNotisComponent, EiRamComponent } from './ei-delade';
+import { EI_BAS, EiBegreppComponent, EiKallaComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
 import {
   ARENDEFALT_NAMN,
   Category,
   EconomicSystem,
-  KATEGORI_ORDNING,
+  INTEGRATION_NAMN,
+  IntegrationProfile,
   LAGE_NAMN,
-  PostingProfile,
+  integrationKlass,
+  kategoriText,
   profilStatus,
 } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
+
+const UTVECKLARE_ETIKETT =
+  'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm bg-surface-neutral text-on-surface-neutral border border-border whitespace-nowrap';
 
 /* ============================================================
    Lista
@@ -20,7 +25,7 @@ import { EkonomiskIntegrationService } from './ei.service';
 
 @Component({
   selector: 'app-ei-ekonomisystem-lista',
-  imports: [RouterLink, EiRamComponent, EiBegreppComponent],
+  imports: [RouterLink, EiRamComponent, EiBegreppComponent, EiKallaComponent],
   template: `
     <app-ei-ram flik="ekonomisystem">
       <h2 class="flex items-center gap-1 text-lg font-semibold text-text mb-3">
@@ -30,13 +35,20 @@ import { EkonomiskIntegrationService } from './ei.service';
         @for (s of service.system(); track s.id) {
           <li class="flex">
             <a [routerLink]="bas + '/ekonomisystem/' + s.id"
-              class="group flex flex-col w-full min-h-[160px] p-4 bg-surface border border-border hover:border-border-strong hover:shadow-sm transition-[border-color,box-shadow] focus:outline-none focus-visible:border-border-focus focus-visible:shadow-focus">
+              class="group flex flex-col w-full min-h-[180px] p-4 bg-surface border border-border hover:border-border-strong hover:shadow-sm transition-[border-color,box-shadow] focus:outline-none focus-visible:border-border-focus focus-visible:shadow-focus">
               <div class="flex items-start justify-between gap-3">
-                <h3 class="text-lg font-semibold text-text leading-snug">{{ s.name }}</h3>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm bg-surface-neutral text-on-surface-neutral border border-border whitespace-nowrap">
-                  <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>
-                  Sätts av utvecklare
-                </span>
+                <div>
+                  <h3 class="text-lg font-semibold text-text leading-snug">{{ s.name }}</h3>
+                  <p class="text-[13px] text-text-muted">{{ s.vendor }}</p>
+                </div>
+                <div class="flex flex-wrap justify-end gap-1">
+                  <span [class]="utvecklare">
+                    <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>
+                    Sätts av utvecklare
+                  </span>
+                  <span [class]="k.status + ' ' + integrationKlass(s.integrationStatus)">{{ integrationNamn[s.integrationStatus] }}</span>
+                  <app-ei-kalla [kalla]="s.source" />
+                </div>
               </div>
               <p class="text-sm text-text-secondary leading-normal mt-1.5">{{ s.description }}</p>
               <dl class="flex flex-wrap gap-x-6 gap-y-1 mt-3 text-sm">
@@ -57,6 +69,10 @@ import { EkonomiskIntegrationService } from './ei.service';
 export class EiEkonomisystemListaComponent {
   readonly service = inject(EkonomiskIntegrationService);
   readonly bas = EI_BAS;
+  readonly k = K;
+  readonly utvecklare = UTVECKLARE_ETIKETT;
+  readonly integrationNamn = INTEGRATION_NAMN;
+  readonly integrationKlass = integrationKlass;
 
   antalProfiler(systemId: string): number {
     return this.service.profiler().filter((p) => p.economicSystemId === systemId).length;
@@ -68,7 +84,7 @@ export class EiEkonomisystemListaComponent {
    ============================================================ */
 
 interface Anvandning {
-  profil: PostingProfile;
+  profil: IntegrationProfile;
   kort: string;
   attributId: string;
   kategori: Category;
@@ -80,19 +96,31 @@ interface Anvandning {
   template: `
     @if (system(); as s) {
       <app-ei-ram flik="ekonomisystem" [brodsmulor]="[{ text: s.name }]">
-        <div class="flex items-center gap-3 mb-3">
+        <div class="flex items-center gap-3 flex-wrap mb-3">
           <h2 class="text-xl font-semibold text-text">{{ s.name }}</h2>
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm bg-surface-neutral text-on-surface-neutral border border-border">
+          <span class="text-sm text-text-muted">{{ s.vendor }}</span>
+          <span [class]="utvecklare">
             <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>
             Sätts av utvecklare
           </span>
+          <span [class]="k.status + ' ' + integrationKlass(s.integrationStatus)">{{ integrationNamn[s.integrationStatus] }}</span>
+          <app-ei-kalla [kalla]="s.source" />
         </div>
-        <div class="mb-6 max-w-[900px]">
-          <app-ei-notis>Ekonomisystemet sätts upp av utvecklare och kan inte ändras här. Det visar vad som går att använda i en integrationsprofil.</app-ei-notis>
+        <div class="mb-6 max-w-[900px] space-y-2">
+          <app-ei-notis>
+            Ekonomisystemet sätts upp av utvecklare och kan inte ändras här. Det visar vad som går att använda i en integrationsprofil.
+            <span class="block mt-1">{{ s.integrationStatusText }}</span>
+          </app-ei-notis>
+          @if (s.integrationStatus === 'NOT_AVAILABLE') {
+            <app-ei-notis niva="warning">
+              {{ s.name }} finns med som exempel på ett andra ekonomisystem. Attribut och dimensioner är ett antagande. Det finns ingen
+              filgenerering för {{ s.name }}, så integrationsprofiler kan bara sparas som utkast.
+            </app-ei-notis>
+          }
         </div>
 
         <nav class="flex flex-wrap gap-x-4 gap-y-1 mb-6 text-sm" aria-label="Innehåll">
-          @for (a of ankare; track a.id) {
+          @for (a of ankare(); track a.id) {
             <a [href]="'#' + a.id" (click)="hoppa($event, a.id)" class="text-interactive hover:underline">{{ a.namn }}</a>
           }
         </nav>
@@ -111,10 +139,10 @@ interface Anvandning {
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-border text-left">
-                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold">Attribut</th>
+                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
                     <th scope="col" class="px-4 py-2.5 font-semibold">Beskrivning</th>
-                    <th scope="col" class="px-4 py-2.5 font-semibold whitespace-nowrap">Kan mappas till</th>
-                    <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold whitespace-nowrap">Används i profiler</th>
+                    <th scope="col" class="px-4 py-2.5 font-semibold whitespace-nowrap"><span class="inline-flex items-center gap-1">Kan mappas till <app-ei-begrepp term="Dimension" /></span></th>
+                    <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold whitespace-nowrap"><span class="inline-flex items-center gap-1">Används i profiler <app-ei-begrepp term="Integrationsprofil" /></span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -140,16 +168,16 @@ interface Anvandning {
             </div>
           </section>
 
-          <!-- 5.2 Agresso-dimensioner -->
+          <!-- 5.2 Dimensioner -->
           <section id="ei-dimensioner" class="bg-surface border border-border">
             <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-              Agresso-dimensioner <app-ei-begrepp term="Agresso-dimension" />
+              Dimensioner <app-ei-begrepp term="Dimension" />
             </h3>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-border text-left">
-                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold">Dimension</th>
+                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold"><span class="inline-flex items-center gap-1">Dimension <app-ei-begrepp term="Dimension" /></span></th>
                     <th scope="col" class="px-4 py-2.5 font-semibold">Beskrivning</th>
                     <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold">Används av</th>
                   </tr>
@@ -167,7 +195,11 @@ interface Anvandning {
             </div>
             <p class="flex items-center gap-1.5 px-5 py-3 text-[13px] text-text-secondary border-t border-border-muted">
               <span class="material-symbols-outlined text-[18px] text-info" aria-hidden="true">info</span>
-              Samma dimension kan betyda olika saker i olika profiler. Utgå alltid från attributets namn.
+              @if (anvandning().length) {
+                Samma dimension kan betyda olika saker i olika profiler. Utgå alltid från attributets namn.
+              } @else {
+                Inga integrationsprofiler använder {{ s.name }}.
+              }
             </p>
           </section>
 
@@ -181,8 +213,8 @@ interface Anvandning {
                 <thead>
                   <tr>
                     <th scope="col" class="sticky left-0 z-10 bg-surface pl-5 pr-4 py-2.5 text-left font-semibold border-b border-r border-border">Attribut</th>
-                    @for (k of kategorier; track k) {
-                      <th scope="col" class="px-2 py-2.5 font-mono text-[12px] font-semibold text-center border-b border-border whitespace-nowrap min-w-[84px]">{{ k }}</th>
+                    @for (c of s.categories; track c.code) {
+                      <th scope="col" class="px-2 py-2.5 font-mono text-[12px] font-semibold text-center border-b border-border whitespace-nowrap min-w-[84px]">{{ c.label }}</th>
                     }
                   </tr>
                 </thead>
@@ -190,15 +222,15 @@ interface Anvandning {
                   @for (a of s.attributes; track a.id) {
                     <tr>
                       <th scope="row" class="sticky left-0 z-10 bg-surface pl-5 pr-4 py-2 text-left font-medium border-b border-r border-border-muted whitespace-nowrap">{{ a.name }}</th>
-                      @for (k of kategorier; track k) {
-                        @let tillaten = a.allowedCategories.includes(k);
-                        @let marken = cellMarken(a.id, k);
+                      @for (c of s.categories; track c.code) {
+                        @let tillaten = a.allowedCategories.includes(c.code);
+                        @let marken = cellMarken(a.id, c.code);
                         <td class="px-1.5 py-1.5 text-center align-middle border-b border-l border-border-muted"
                           [class]="!tillaten ? 'bg-gray-200' : marken.length ? 'bg-surface-primary' : 'bg-surface'"
                           [attr.aria-label]="!tillaten ? 'Inte tillåten' : marken.length ? null : 'Tillåten, används inte'">
                           <div class="flex flex-wrap justify-center gap-1">
                             @for (m of marken; track m.profil.id) {
-                              <a [routerLink]="profilLank(m.profil.id)" [queryParams]="{ flik: 'mappning' }" [title]="m.profil.name + ': ' + a.name + ' i ' + k"
+                              <a [routerLink]="profilLank(m.profil.id)" [queryParams]="{ flik: 'mappning' }" [title]="m.profil.name + ': ' + a.name + ' i ' + c.code"
                                 class="inline-block px-1.5 py-px text-xs font-medium rounded-sm bg-primary text-on-primary hover:bg-primary-hover whitespace-nowrap">{{ m.kort }}</a>
                             }
                           </div>
@@ -210,9 +242,9 @@ interface Anvandning {
               </table>
             </div>
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 text-[13px] text-text-secondary border-t border-border-muted">
-              <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-4 bg-gray-200 border border-border" aria-hidden="true"></span>Inte tillåten</span>
-              <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-4 bg-surface border border-border" aria-hidden="true"></span>Tillåten men används inte</span>
-              <span class="flex items-center gap-1.5"><span class="inline-block px-1.5 py-px text-xs font-medium rounded-sm bg-primary text-on-primary" aria-hidden="true">TVV</span>Används av profilen. Klicka för att se mappningen.</span>
+              <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-4 bg-gray-200 border border-border" aria-hidden="true"></span>Grå: kombinationen är inte tillåten</span>
+              <span class="flex items-center gap-1.5"><span class="inline-block w-4 h-4 bg-surface border border-border" aria-hidden="true"></span>Ljus: tillåten men används inte</span>
+              <span class="flex items-center gap-1.5"><span class="inline-block px-1.5 py-px text-xs font-medium rounded-sm bg-primary text-on-primary" aria-hidden="true">{{ exempelKort() }}</span>Märke: används av organisationens profil. Klicka för att se mappningen.</span>
               <span class="text-text-muted">Visar aktiva och planerade integrationsprofiler.</span>
             </div>
           </section>
@@ -228,6 +260,7 @@ interface Anvandning {
                   <li><span class="inline-block w-9 font-mono text-[13px] font-semibold">{{ b.code }}</span>{{ b.label }}</li>
                 }
               </ul>
+              <p class="px-5 pb-3 text-[13px] text-text-secondary">Reskontraraden blir AP vid utbetalning och AR vid inbetalning.</p>
             </section>
 
             <!-- 5.5 Flöden -->
@@ -248,40 +281,42 @@ interface Anvandning {
                 Värdeursprung <app-ei-begrepp term="Värde i kontering" />
               </h3>
               <dl class="px-5 py-3 space-y-2.5 text-sm">
-                <div><dt class="font-medium">{{ lage.SELECTABLE }}</dt><dd class="text-text-secondary">Värdet väljs ur värdelistan när en konteringsmall skapas.</dd></div>
-                <div><dt class="font-medium">{{ lage.FIXED }}</dt><dd class="text-text-secondary">Värdet sätts i profilen och gäller alla konteringsmallar.</dd></div>
+                <div><dt class="font-medium">{{ lage.SELECTABLE }}</dt><dd class="text-text-secondary">Värdet väljs ur värdelistan när en kontering skapas.</dd></div>
+                <div><dt class="font-medium">{{ lage.FIXED }}</dt><dd class="text-text-secondary">Värdet sätts i integrationsprofilen och gäller alla konteringar.</dd></div>
                 <div><dt class="font-medium">{{ lage.FROM_CASE }}</dt><dd class="text-text-secondary">Värdet fylls i vid utbetalning, antingen {{ arendefalt.CASE_ID }} (CASE_ID) eller {{ arendefalt.COUNTERPART_CODE }} (COUNTERPART_CODE).</dd></div>
-                <div><dt class="font-medium">{{ lage.FOLLOWS_FLOW }}</dt><dd class="text-text-secondary">Värdet är samma som konteringsmallens flöde (UTB eller INB).</dd></div>
+                <div><dt class="font-medium">{{ lage.FOLLOWS_FLOW }}</dt><dd class="text-text-secondary">Värdet är samma som konteringens flöde (UTB eller INB).</dd></div>
               </dl>
             </section>
           </div>
 
           <!-- 5.7 Ersatta systemattribut -->
-          <section id="ei-ersatta" class="bg-surface border border-border">
-            <h3 class="px-5 py-3 text-base font-semibold text-text border-b border-border-muted">Ersatta systemattribut</h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-border text-left">
-                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold">Gammalt attribut</th>
-                    <th scope="col" class="px-4 py-2.5 font-semibold">Kod</th>
-                    <th scope="col" class="px-4 py-2.5 font-semibold">Gamla värden</th>
-                    <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold">Ersätts av</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (r of s.replacedSystemAttributes; track r.oldCode) {
-                    <tr class="border-b border-border-muted odd:bg-surface-subtle">
-                      <td class="pl-5 pr-4 py-2.5 font-medium">{{ r.oldName }}</td>
-                      <td class="px-4 py-2.5 font-mono text-[13px]">{{ r.oldCode }}</td>
-                      <td class="px-4 py-2.5 font-mono text-[13px]">{{ r.oldValues }}</td>
-                      <td class="pl-4 pr-5 py-2.5 text-text-secondary">{{ r.replacedBy }}</td>
+          @if (s.replacedSystemAttributes.length) {
+            <section id="ei-ersatta" class="bg-surface border border-border">
+              <h3 class="px-5 py-3 text-base font-semibold text-text border-b border-border-muted">Ersatta systemattribut</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-border text-left">
+                      <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold">Gammalt attribut</th>
+                      <th scope="col" class="px-4 py-2.5 font-semibold">Kod</th>
+                      <th scope="col" class="px-4 py-2.5 font-semibold">Gamla värden</th>
+                      <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold">Ersätts av</th>
                     </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody>
+                    @for (r of s.replacedSystemAttributes; track r.oldCode) {
+                      <tr class="border-b border-border-muted odd:bg-surface-subtle">
+                        <td class="pl-5 pr-4 py-2.5 font-medium">{{ r.oldName }}</td>
+                        <td class="px-4 py-2.5 font-mono text-[13px]">{{ r.oldCode }}</td>
+                        <td class="px-4 py-2.5 font-mono text-[13px]">{{ r.oldValues }}</td>
+                        <td class="pl-4 pr-5 py-2.5 text-text-secondary">{{ r.replacedBy }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
         </div>
       </app-ei-ram>
     } @else {
@@ -295,21 +330,26 @@ export class EiEkonomisystemDetaljComponent {
   readonly service = inject(EkonomiskIntegrationService);
   private readonly route = inject(ActivatedRoute);
 
-  readonly kategorier = KATEGORI_ORDNING;
+  readonly k = K;
+  readonly utvecklare = UTVECKLARE_ETIKETT;
   readonly lage = LAGE_NAMN;
   readonly arendefalt = ARENDEFALT_NAMN;
-  readonly ankare = [
+  readonly integrationNamn = INTEGRATION_NAMN;
+  readonly integrationKlass = integrationKlass;
+  readonly kategoriText = kategoriText;
+
+  private readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))));
+  readonly system = computed<EconomicSystem | null>(() => this.service.hamtaSystem(this.id() ?? ''));
+
+  readonly ankare = computed(() => [
     { id: 'ei-attribut', namn: 'Attribut' },
-    { id: 'ei-dimensioner', namn: 'Agresso-dimensioner' },
+    { id: 'ei-dimensioner', namn: 'Dimensioner' },
     { id: 'ei-matris', namn: 'Mappningsmatris' },
     { id: 'ei-bocker', namn: 'Böcker' },
     { id: 'ei-floden', namn: 'Flöden' },
     { id: 'ei-ursprung', namn: 'Värdeursprung' },
-    { id: 'ei-ersatta', namn: 'Ersatta systemattribut' },
-  ];
-
-  private readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))));
-  readonly system = computed<EconomicSystem | null>(() => this.service.hamtaSystem(this.id() ?? ''));
+    ...(this.system()?.replacedSystemAttributes.length ? [{ id: 'ei-ersatta', namn: 'Ersatta systemattribut' }] : []),
+  ]);
 
   /** Mappningar i aktiva och planerade profiler som använder systemet. */
   readonly anvandning = computed<Anvandning[]>(() => {
@@ -328,6 +368,8 @@ export class EiEkonomisystemDetaljComponent {
       );
   });
 
+  readonly exempelKort = computed(() => this.anvandning()[0]?.kort ?? this.service.organisationer()[0]?.shortName ?? '');
+
   anvandningForAttribut(attributId: string): Anvandning[] {
     return this.anvandning().filter((u) => u.attributId === attributId);
   }
@@ -341,13 +383,6 @@ export class EiEkonomisystemDetaljComponent {
       .filter((u) => u.kategori === kategori)
       .map((u) => `${u.kort}: ${this.service.attributNamn(u.profil, u.attributId)}`)
       .join(' · ');
-  }
-
-  kategoriText(k: Category[]): string {
-    const dim = k.filter((x) => x.startsWith('DIM'));
-    const ovriga = k.filter((x) => !x.startsWith('DIM'));
-    const delar = dim.length === 7 ? ['DIM1–DIM7'] : dim;
-    return [...delar, ...ovriga].join(', ');
   }
 
   profilLank(id: string): string {

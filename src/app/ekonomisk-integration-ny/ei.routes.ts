@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { EiEkonomisystemDetaljComponent, EiEkonomisystemListaComponent } from './ekonomisystem.component';
-import { EiMallDetaljComponent } from './mall-detalj.component';
-import { EiMallNyComponent } from './mall-ny.component';
-import { EiMallarListaComponent } from './mallar-lista.component';
+import { EiKonteringDetaljComponent } from './kontering-detalj.component';
+import { EiKonteringNyComponent } from './kontering-ny.component';
+import { EiKonteringarListaComponent } from './konteringar-lista.component';
 import { EiProfilGuideComponent } from './profil-guide.component';
 import { EiProfilDetaljComponent } from './profil-detalj.component';
 import { EiProfilerListaComponent } from './profiler-lista.component';
@@ -15,7 +15,9 @@ export const EI_ROUTES: Routes = [
   { path: 'integrationsprofiler', component: EiProfilerListaComponent },
   { path: 'integrationsprofiler/ny', component: EiProfilGuideComponent },
   { path: 'integrationsprofiler/:id', component: EiProfilDetaljComponent },
-  { path: 'konteringsmallar', component: EiMallarListaComponent },
-  { path: 'konteringsmallar/ny', component: EiMallNyComponent },
-  { path: 'konteringsmallar/:id', component: EiMallDetaljComponent },
+  { path: 'konteringar', component: EiKonteringarListaComponent },
+  { path: 'konteringar/ny', component: EiKonteringNyComponent },
+  { path: 'konteringar/:id', component: EiKonteringDetaljComponent },
+  // Adresser från version 1
+  { path: 'konteringsmallar', redirectTo: 'konteringar' },
 ];

@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { namnILage } from '../delade/datalage';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import {
   Brodsmula,
@@ -21,20 +22,24 @@ import {
   FLODE_NAMN,
   FLODE_ORDNING,
   Flow,
-  MALLSTATUS_NAMN,
+  KONTERINGSSTATUS_NAMN,
   PROFILSTATUS_NAMN,
-  PostingProfile,
-  TemplateStatus,
+  IntegrationProfile,
+  PostingConfigStatus,
+  SPARRAD_KLASS,
+  SPARRSTATUS_NAMN,
   TransactionType,
   giltighetText,
   idag,
   profilStatus,
   profilStatusKlass,
-  sorteradeMappningar,
+  sparrPa,
+  sparrStatus,
+  sparrStatusKlass,
 } from './ei-modell';
 import { Aktivering, EiPlaneraComponent } from './ei-planera.component';
 import { EkonomiskIntegrationService, ProfilFlik, nyttId } from './ei.service';
-import { EiMallTabellComponent } from './mall-tabell.component';
+import { EiKonteringTabellComponent } from './kontering-tabell.component';
 import { EiProfilMappningComponent } from './profil-mappning.component';
 import { EiProfilVardelistorComponent } from './profil-vardelistor.component';
 
@@ -42,7 +47,7 @@ const FLIKAR: { id: ProfilFlik; namn: string }[] = [
   { id: 'oversikt', namn: 'Översikt' },
   { id: 'mappning', namn: 'Mappning' },
   { id: 'vardelistor', namn: 'Värdelistor' },
-  { id: 'mallar', namn: 'Konteringsmallar' },
+  { id: 'konteringar', namn: 'Konteringar' },
   { id: 'sparr', namn: 'Spärrperioder' },
 ];
 
@@ -69,7 +74,7 @@ interface SparrForm {
     EiNotisComponent,
     EiDialogComponent,
     EiPlaneraComponent,
-    EiMallTabellComponent,
+    EiKonteringTabellComponent,
     EiProfilMappningComponent,
     EiProfilVardelistorComponent,
   ],
@@ -81,7 +86,7 @@ interface SparrForm {
         @if (aktuellSparr(); as s) {
           <div class="mb-4">
             <app-ei-notis niva="error">
-              Utbetalningar är spärrade från {{ s.from }} till {{ s.to ?? 'tills vidare' }}. Orsak: {{ s.reason }}
+              Utbetalningar via den här integrationsprofilen är spärrade från {{ s.from }} till {{ s.to ?? 'tills vidare' }}. Orsak: {{ s.reason }}
             </app-ei-notis>
           </div>
         }
@@ -92,6 +97,7 @@ interface SparrForm {
             <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-xl font-semibold text-text">{{ p.name }}</h2>
               <span [class]="k.status + ' ' + statusKlass(p)">{{ statusNamn[status] }}</span>
+              @if (aktuellSparr()) { <span [class]="k.status + ' ' + sparradKlass">Spärrad</span> }
               <app-ei-kalla [kalla]="p.source" />
             </div>
             <dl class="flex flex-wrap gap-x-6 gap-y-1 mt-1.5 text-sm">
@@ -147,7 +153,7 @@ interface SparrForm {
                 @if (f.id === 'oversikt' && varningar().length) {
                   <span class="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 text-[11px] rounded-full bg-warning text-on-warning">{{ varningar().length }}</span>
                 }
-                @if (f.id === 'mallar') { <span class="ml-1 text-text-muted">{{ mallar().length }}</span> }
+                @if (f.id === 'konteringar') { <span class="ml-1 text-text-muted">{{ konteringar().length }}</span> }
                 @if (f.id === 'sparr') { <span class="ml-1 text-text-muted">{{ p.blockedPeriods.length }}</span> }
               </button>
             }
@@ -158,13 +164,17 @@ interface SparrForm {
               <!-- ============ Översikt ============ -->
               @case ('oversikt') {
                 <div class="p-5 space-y-5">
-                  @if (p.notices.length) {
-                    <div class="space-y-2">
-                      @for (n of p.notices; track $index) {
-                        <app-ei-notis [niva]="n.level">{{ n.text }}</app-ei-notis>
-                      }
-                    </div>
-                  }
+                  <div class="space-y-2">
+                    @if (!service.harIntegration(p)) {
+                      <app-ei-notis niva="warning">Det finns ingen integration för {{ service.systemNamn(p) }}. Integrationsprofiler kan bara sparas som utkast.</app-ei-notis>
+                    }
+                    @for (n of p.notices; track $index) {
+                      <app-ei-notis [niva]="n.level">{{ n.text }}</app-ei-notis>
+                    }
+                    @if (service.migrerad(p)) {
+                      <app-ei-notis>{{ migreringsnotis }}</app-ei-notis>
+                    }
+                  </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     <section class="border border-border p-4">
                       <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Flöden <app-ei-begrepp term="Flöde" /></h3>
@@ -191,13 +201,30 @@ interface SparrForm {
                       <button type="button" (click)="valjFlik('mappning')" class="mt-2 text-sm" [class]="k.lank">Visa mappningen</button>
                     </section>
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Konteringsmallar <app-ei-begrepp term="Konteringsmall" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Konteringar <app-ei-begrepp term="Kontering" /></h3>
                       <ul class="text-sm space-y-1 list-none m-0 p-0">
-                        @for (s of mallStatusar; track s) {
-                          <li class="flex justify-between max-w-[200px]"><span>{{ mallStatusNamn[s] }}</span><span class="font-medium">{{ antalMallar(s) }}</span></li>
+                        @for (s of konteringStatusar; track s) {
+                          <li class="flex justify-between max-w-[200px]"><span>{{ konteringStatusNamn[s] }}</span><span class="font-medium">{{ antalKonteringar(s) }}</span></li>
                         }
                       </ul>
-                      <button type="button" (click)="valjFlik('mallar')" class="mt-2 text-sm" [class]="k.lank">Visa konteringsmallarna</button>
+                      <button type="button" (click)="valjFlik('konteringar')" class="mt-2 text-sm" [class]="k.lank">Visa konteringarna</button>
+                    </section>
+                    <section class="border border-border p-4">
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Spärrar <app-ei-begrepp term="Spärrperiod" /></h3>
+                      @if (aktuellaSparrar().length) {
+                        <ul class="text-sm space-y-1.5 list-none m-0 p-0">
+                          @for (s of aktuellaSparrar(); track s.id) {
+                            <li>
+                              <span [class]="k.status + ' ' + sparrKlass(sparrStatus(s)) + ' mr-1'">{{ sparrNamn[sparrStatus(s)] }}</span>
+                              {{ s.from }} – {{ s.to ?? 'tills vidare' }}
+                              <span class="block text-text-secondary">{{ s.reason }}</span>
+                            </li>
+                          }
+                        </ul>
+                      } @else {
+                        <p class="text-sm text-text-muted">Inga pågående eller kommande spärrar.</p>
+                      }
+                      <button type="button" (click)="valjFlik('sparr')" class="mt-2 text-sm" [class]="k.lank">Visa spärrperioderna</button>
                     </section>
                     <section class="border border-border p-4">
                       <h3 class="text-sm font-semibold mb-2">Varningar</h3>
@@ -223,9 +250,45 @@ interface SparrForm {
                       } @else {
                         <p class="text-sm text-text-muted">–</p>
                       }
-                      <p [class]="k.hjalp">Hämtas från konteringsmallarnas Avsedd för.</p>
+                      <p [class]="k.hjalp">Beslutande organisationer i profilens konteringar.</p>
                     </section>
                   </div>
+
+                  <!-- Tekniska egenskaper (skrivskyddat) -->
+                  <section class="border border-border">
+                    <h3 class="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold border-b border-border-muted">
+                      Tekniska egenskaper <app-ei-begrepp term="Tekniska egenskaper" />
+                      <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm bg-surface-neutral text-on-surface-neutral border border-border">
+                        <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>Sätts av utvecklare
+                      </span>
+                    </h3>
+                    @if (p.technicalProperties.length) {
+                      <table class="w-full text-sm">
+                        <thead>
+                          <tr class="border-b border-border">
+                            <th scope="col" [class]="k.th + ' pl-4'">Egenskap</th>
+                            <th scope="col" [class]="k.th + ' pr-4'">Värde</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (t of p.technicalProperties; track t.key) {
+                            <tr class="border-b border-border-muted odd:bg-surface-subtle">
+                              <td class="pl-4 pr-4 py-2">{{ t.label }}</td>
+                              <td class="px-4 py-2">
+                                @if (t.value) { <span class="font-mono text-[13px]">{{ t.value }}</span> }
+                                @else { <span class="text-text-muted italic">Okänt – sätts av utvecklare</span> }
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    } @else {
+                      <p class="px-4 py-3 text-sm text-text-muted">Okänt – sätts av utvecklare</p>
+                    }
+                    <p class="px-4 py-2.5 text-[13px] text-text-muted">
+                      Egenskaperna avgör vilken klient i ekonomisystemet som tar emot utbetalningsfilen. De kan inte ändras här.
+                    </p>
+                  </section>
                 </div>
               }
 
@@ -239,23 +302,23 @@ interface SparrForm {
                 <app-ei-profil-vardelistor [profil]="p" [attributId]="attributParam()" />
               }
 
-              <!-- ============ Konteringsmallar ============ -->
-              @case ('mallar') {
+              <!-- ============ Konteringar ============ -->
+              @case ('konteringar') {
                 <div class="flex items-center justify-between gap-4 px-5 py-4">
-                  <p class="text-sm text-text-secondary">Konteringsmallar som använder profilen.</p>
+                  <p class="text-sm text-text-secondary">Konteringar som använder profilen.</p>
                   @if (status !== 'ENDED') {
-                    <a [routerLink]="bas + '/konteringsmallar/ny'" [queryParams]="{ profil: p.id }" [class]="k.primar">
-                      <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Ny konteringsmall
+                    <a [routerLink]="bas + '/konteringar/ny'" [queryParams]="{ profil: p.id }" [class]="k.primar">
+                      <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>Ny kontering
                     </a>
                   }
                 </div>
-                @if (mallar().length) {
-                  <app-ei-mall-tabell [mallar]="mallar()" [visaProfil]="false" />
+                @if (konteringar().length) {
+                  <app-ei-kontering-tabell [konteringar]="konteringar()" [visaProfil]="false" />
                 } @else {
                   <div class="px-6 py-10 text-center border-t border-border-muted">
-                    <p class="text-sm text-text-muted">Inga konteringsmallar ännu.</p>
+                    <p class="text-sm text-text-muted">Inga konteringar ännu.</p>
                     @if (status !== 'ENDED') {
-                      <a [routerLink]="bas + '/konteringsmallar/ny'" [queryParams]="{ profil: p.id }" [class]="k.sekundarLiten + ' mt-3'">Ny konteringsmall</a>
+                      <a [routerLink]="bas + '/konteringar/ny'" [queryParams]="{ profil: p.id }" [class]="k.sekundarLiten + ' mt-3'">Ny kontering</a>
                     }
                   </div>
                 }
@@ -278,6 +341,7 @@ interface SparrForm {
                         <th scope="col" [class]="k.th">Orsak</th>
                         <th scope="col" [class]="k.th">Skapad av</th>
                         <th scope="col" [class]="k.th">Skapad</th>
+                        <th scope="col" [class]="k.th">Status</th>
                         <th scope="col" class="pl-4 pr-5 py-2.5"><span class="sr-only">Åtgärder</span></th>
                       </tr>
                     </thead>
@@ -289,17 +353,26 @@ interface SparrForm {
                           <td class="px-4 py-2.5">{{ s.reason }}</td>
                           <td class="px-4 py-2.5">{{ s.createdBy }}</td>
                           <td class="px-4 py-2.5 whitespace-nowrap">{{ s.createdAt }}</td>
+                          <td class="px-4 py-2.5">
+                            <span [class]="k.status + ' ' + sparrKlass(sparrStatus(s))">{{ sparrNamn[sparrStatus(s)] }}</span>
+                            <app-ei-kalla class="ml-1" [kalla]="s.source" />
+                          </td>
                           <td class="pl-4 pr-5 py-1.5 text-right">
-                            <button type="button" (click)="taBortSparr.set(s)" [attr.aria-label]="'Ta bort spärr från ' + s.from" title="Ta bort" [class]="k.ikon">
+                            <button type="button" (click)="taBortSparr.set(s)" [disabled]="sparrStatus(s) === 'ENDED'"
+                              [attr.aria-label]="'Ta bort spärr från ' + s.from"
+                              [title]="sparrStatus(s) === 'ENDED' ? 'Avslutade spärrar kan inte tas bort' : 'Ta bort'" [class]="k.ikon">
                               <span class="material-symbols-outlined text-[20px] align-middle">delete</span>
                             </button>
                           </td>
                         </tr>
                       } @empty {
-                        <tr><td colspan="6" class="px-6 py-10 text-center text-text-muted">Inga spärrperioder.</td></tr>
+                        <tr><td colspan="7" class="px-6 py-10 text-center text-text-muted">Inga spärrperioder.</td></tr>
                       }
                     </tbody>
                   </table>
+                </div>
+                <div class="px-5 py-4">
+                  <app-ei-notis>Öppen fråga: det är inte klarlagt vilket av utbetalningsjobben (händelse, verifikat eller fil) som respekterar spärren.</app-ei-notis>
                 </div>
               }
             }
@@ -341,7 +414,7 @@ interface SparrForm {
                 </label>
               }
             </div>
-            <p [class]="k.hjalp">Böckerna bestämmer vilka rader som skickas till Agresso.</p>
+            <p [class]="k.hjalp">Böckerna bestämmer vilka rader som skickas till ekonomisystemet. Utbetalning kräver AP och inbetalning kräver AR.</p>
           </fieldset>
           @if (grundFel().length && forsokSpara()) {
             <ul class="space-y-1 list-none m-0 p-0" role="alert">
@@ -360,7 +433,7 @@ interface SparrForm {
           <div>
             <label for="ei-avsluta" [class]="k.etikett">Giltig till</label>
             <app-datum-valjare inputId="ei-avsluta" etikett="Giltig till" [varde]="avslutaDatum()!" (vardeChange)="avslutaDatum.set($event)" />
-            <p [class]="k.hjalp">Profilen blir Avslutad när datumet har passerats. Konteringsmallar som använder profilen får en varning.</p>
+            <p [class]="k.hjalp">Profilen blir Avslutad när datumet har passerats. Konteringar som använder profilen får en varning (K9).</p>
             @if (avslutaDatum()! && avslutaDatum()! < p.validFrom) {
               <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>Giltig till kan inte vara före giltig från ({{ p.validFrom }}).</p>
             }
@@ -372,13 +445,13 @@ interface SparrForm {
 
       @if (taBortOppen()) {
         <app-ei-dialog rubrik="Ta bort integrationsprofilen?" roll="alertdialog" (stang)="taBortOppen.set(false)">
-          @if (mallar().length) {
-            <p [class]="k.fel + ' text-sm'"><span class="material-symbols-outlined text-[18px]">block</span>Profilen används i {{ mallar().length }} konteringsmall(ar). Ta bort eller flytta dem först.</p>
+          @if (konteringar().length) {
+            <p [class]="k.fel + ' text-sm'"><span class="material-symbols-outlined text-[18px]">block</span>Profilen används i {{ konteringar().length }} kontering(ar). Ta bort dem först.</p>
           } @else {
             <p class="text-sm text-text"><span class="font-semibold">{{ p.name }}</span> tas bort.</p>
           }
           <button fot type="button" (click)="taBortOppen.set(false)" [class]="k.sekundar">Avbryt</button>
-          @if (!mallar().length) {
+          @if (!konteringar().length) {
             <button fot type="button" (click)="taBort()" [class]="k.fara">Ta bort</button>
           }
         </app-ei-dialog>
@@ -439,8 +512,16 @@ export class EiProfilDetaljComponent {
   readonly bokNamn = BOK_NAMN;
   readonly floden = FLODE_ORDNING;
   readonly bocker = BOK_ORDNING;
-  readonly mallStatusar: TemplateStatus[] = ['DRAFT', 'ACTIVE', 'INACTIVE'];
-  readonly mallStatusNamn = MALLSTATUS_NAMN;
+  readonly konteringStatusar: PostingConfigStatus[] = ['DRAFT', 'ACTIVE', 'INACTIVE'];
+  readonly konteringStatusNamn = KONTERINGSSTATUS_NAMN;
+  readonly sparradKlass = SPARRAD_KLASS;
+  readonly sparrNamn = SPARRSTATUS_NAMN;
+  readonly sparrKlass = sparrStatusKlass;
+  readonly sparrStatus = sparrStatus;
+  /** Statisk text som innehåller ett organisationsnamn – går genom namntabellen i anonymiserat läge. */
+  readonly migreringsnotis = namnILage(
+    "Vid migrering ersätter profilens namn dagens beskrivning av det ekonomiska systemet (till exempel 'Aggresso Region Dalarna').",
+  );
   readonly profilStatus = profilStatus;
 
   private readonly params = toSignal(this.route.paramMap, { requireSync: true });
@@ -454,7 +535,7 @@ export class EiProfilDetaljComponent {
   readonly attributParam = computed(() => this.query().get('attribut'));
 
   readonly org = computed(() => this.service.hamtaOrg(this.profil()?.organisationId ?? null));
-  readonly mallar = computed(() => (this.profil() ? this.service.mallarFor(this.profil()!.id) : []));
+  readonly konteringar = computed(() => (this.profil() ? this.service.konteringarFor(this.profil()!.id) : []));
   readonly varningar = computed(() => (this.profil() ? this.service.profilVarningar(this.profil()!) : []));
 
   readonly smulor = computed<Brodsmula[]>(() => {
@@ -470,7 +551,7 @@ export class EiProfilDetaljComponent {
     const p = this.profil();
     if (!p) return [];
     const namn = (mode: string) =>
-      sorteradeMappningar(p)
+      this.service.sorteradeMappningar(p)
         .filter((m) => m.mode === mode)
         .map((m) => this.service.attributNamn(p, m.attributeId) + (m.mode === 'FIXED' ? ` (${m.fixedValue})` : m.mode === 'FROM_CASE' ? ` (${ARENDEFALT_NAMN[m.caseField ?? 'CASE_ID']})` : ''));
     return [
@@ -482,26 +563,24 @@ export class EiProfilDetaljComponent {
   });
 
   readonly betalarUtFor = computed(() => {
-    const namn = this.mallar()
-      .map((t) => this.service.hamtaBeslutande(t.intendedFor.decidingOrganisationId)?.name)
+    const namn = this.konteringar()
+      .map((k) => this.service.hamtaBeslutande(k.decidingOrganisationId)?.name)
       .filter((n): n is string => !!n);
     return [...new Set(namn)].sort((a, b) => a.localeCompare(b, 'sv'));
   });
 
-  readonly aktuellSparr = computed(() => {
-    const dag = idag();
-    return this.profil()?.blockedPeriods.find((s) => s.from <= dag && (!s.to || s.to >= dag)) ?? null;
-  });
+  readonly aktuellSparr = computed(() => (this.profil() ? sparrPa(this.profil()!) : null));
+  readonly aktuellaSparrar = computed(() => (this.profil()?.blockedPeriods ?? []).filter((s) => sparrStatus(s) !== 'ENDED'));
 
-  antalMallar(s: TemplateStatus): number {
-    return this.mallar().filter((t) => t.status === s).length;
+  antalKonteringar(s: PostingConfigStatus): number {
+    return this.konteringar().filter((k) => k.status === s).length;
   }
 
-  statusKlass(p: PostingProfile): string {
+  statusKlass(p: IntegrationProfile): string {
     return profilStatusKlass(profilStatus(p));
   }
 
-  giltig(p: PostingProfile): string {
+  giltig(p: IntegrationProfile): string {
     return giltighetText(p.validFrom, p.validTo);
   }
 
@@ -612,7 +691,7 @@ export class EiProfilDetaljComponent {
     this.grund.set(null);
   }
 
-  /* ---------- Spärrperioder (P2) ---------- */
+  /* ---------- Spärrperioder (6.7, S1) ---------- */
 
   readonly sparr = signal<SparrForm | null>(null);
   readonly taBortSparr = signal<BlockedPeriod | null>(null);
@@ -656,7 +735,7 @@ export class EiProfilDetaljComponent {
   bekraftaTaBortSparr(s: BlockedPeriod): void {
     const p = this.profil();
     this.taBortSparr.set(null);
-    if (p)
+    if (p && sparrStatus(s) !== 'ENDED')
       this.service.andraProfil(p.id, (x) => ({ ...x, blockedPeriods: x.blockedPeriods.filter((b) => b.id !== s.id) }), 'Spärren har tagits bort.');
   }
 }

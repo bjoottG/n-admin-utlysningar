@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import { EI_BAS, EiBegreppComponent, EiDialogComponent, EiKallaComponent, EiNotisComponent, K } from './ei-delade';
-import { AllowedValue, Mapping, PostingProfile, PostingTemplate, aktivaVarden, idag, sorteradeMappningar } from './ei-modell';
+import { AllowedValue, Mapping, IntegrationProfile, PostingConfig, aktivaVarden, idag } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
 
 type Filter = 'alla' | 'aktiva' | 'inaktiva' | 'oanvanda' | 'namnSaknas';
@@ -100,10 +100,10 @@ export function tolkaInklistrat(text: string, befintliga: string[]): { nya: stri
               <app-ei-notis>{{ m.importNote }}</app-ei-notis>
             }
             @if (m.mode === 'FIXED') {
-              <p class="text-[13px] text-text-secondary">Läget är Fast värde: <span class="font-mono">{{ m.fixedValue }}</span> används i alla konteringsmallar.</p>
+              <p class="text-[13px] text-text-secondary">Läget är Fast värde: <span class="font-mono">{{ m.fixedValue }}</span> används i alla konteringar.</p>
             }
             @if (m.mode === 'FOLLOWS_FLOW') {
-              <p class="text-[13px] text-text-secondary">Läget är Följer flödet: värdet blir konteringsmallens flöde.</p>
+              <p class="text-[13px] text-text-secondary">Läget är Följer flödet: värdet blir konteringens flöde.</p>
             }
             <div class="flex items-center gap-3 flex-wrap">
               <div class="flex border border-border" role="group" aria-label="Filter">
@@ -159,7 +159,7 @@ export function tolkaInklistrat(text: string, befintliga: string[]): { nya: stri
                     </td>
                     <td class="px-4 py-2.5 align-top">
                       @for (t of anv; track t.id; let sist = $last) {
-                        <a [routerLink]="bas + '/konteringsmallar/' + t.id" [class]="k.lank">{{ t.name }}</a>@if (!sist) {<span class="text-text-muted">, </span>}
+                        <a [routerLink]="bas + '/konteringar/' + t.id" [class]="k.lank">{{ service.konteringNamn(t) }}</a>@if (!sist) {<span class="text-text-muted">, </span>}
                       } @empty {
                         <span class="text-text-subtle">–</span>
                       }
@@ -255,7 +255,7 @@ export function tolkaInklistrat(text: string, befintliga: string[]): { nya: stri
           <p [class]="k.fel + ' text-sm'"><span class="material-symbols-outlined text-[18px]">block</span>Värdet är profilens fasta värde och kan inte inaktiveras. Ändra läget under Mappning först.</p>
         } @else {
           <app-ei-notis niva="warning">
-            Värdet används i {{ i.mallar.length }} konteringsmall(ar): {{ mallnamn(i.mallar) }}. Det ligger kvar där men kan inte väljas i nya konteringsmallar eller versioner.
+            Värdet används i {{ i.konteringar.length }} kontering(ar): {{ konteringsnamn(i.konteringar) }}. Det ligger kvar där men kan inte väljas i nya konteringar eller versioner.
           </app-ei-notis>
         }
         <button fot type="button" (click)="inaktivera.set(null)" [class]="k.sekundar">{{ i.arFast ? 'Stäng' : 'Avbryt' }}</button>
@@ -281,7 +281,7 @@ export class EiProfilVardelistorComponent {
   readonly bas = EI_BAS;
   readonly filterLista = FILTER;
 
-  readonly profil = input.required<PostingProfile>();
+  readonly profil = input.required<IntegrationProfile>();
   readonly attributId = input<string | null>(null);
 
   readonly filter = signal<Filter>('alla');
@@ -290,10 +290,10 @@ export class EiProfilVardelistorComponent {
   readonly forsokSpara = signal(false);
   readonly klistraOppen = signal(false);
   readonly klistraText = signal('');
-  readonly inaktivera = signal<{ varde: AllowedValue; mallar: PostingTemplate[]; arFast: boolean } | null>(null);
+  readonly inaktivera = signal<{ varde: AllowedValue; konteringar: PostingConfig[]; arFast: boolean } | null>(null);
   readonly taBort = signal<AllowedValue | null>(null);
 
-  readonly medLista = computed(() => sorteradeMappningar(this.profil()).filter((m) => m.mode !== 'FROM_CASE'));
+  readonly medLista = computed(() => this.service.sorteradeMappningar(this.profil()).filter((m) => m.mode !== 'FROM_CASE'));
   readonly vald = computed<Mapping | null>(
     () => this.medLista().find((m) => m.attributeId === this.attributId()) ?? this.medLista()[0] ?? null,
   );
@@ -301,15 +301,15 @@ export class EiProfilVardelistorComponent {
   /** Användning per kod för valt attribut. */
   private readonly anvandning = computed(() => {
     const m = this.vald();
-    const karta = new Map<string, PostingTemplate[]>();
+    const karta = new Map<string, PostingConfig[]>();
     if (!m) return karta;
     for (const v of m.values) {
-      karta.set(v.code, this.service.mallarSomAnvanderVarde(this.profil().id, m.attributeId, v.code));
+      karta.set(v.code, this.service.konteringarSomAnvanderVarde(this.profil().id, m.attributeId, v.code));
     }
     return karta;
   });
 
-  anvands(v: AllowedValue): PostingTemplate[] {
+  anvands(v: AllowedValue): PostingConfig[] {
     return this.anvandning().get(v.code) ?? [];
   }
 
@@ -345,8 +345,8 @@ export class EiProfilVardelistorComponent {
     return aktivaVarden(m).length;
   }
 
-  mallnamn(mallar: PostingTemplate[]): string {
-    return mallar.map((t) => t.name).join(', ');
+  konteringsnamn(konteringar: PostingConfig[]): string {
+    return konteringar.map((k) => this.service.konteringNamn(k)).join(', ');
   }
 
   /* ---------- Ändra värdelistan ---------- */
@@ -446,8 +446,8 @@ export class EiProfilVardelistorComponent {
     }
     const m = this.vald();
     const arFast = m?.mode === 'FIXED' && m.fixedValue === v.code;
-    const mallar = this.anvands(v);
-    if (arFast || mallar.length) this.inaktivera.set({ varde: v, mallar, arFast });
+    const konteringar = this.anvands(v);
+    if (arFast || konteringar.length) this.inaktivera.set({ varde: v, konteringar, arFast });
     else this.sattStatus(v, 'INACTIVE');
   }
 

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
-import { EiDialogComponent, K } from './ei-delade';
-import { PostingProfile, idag, plusDagar } from './ei-modell';
+import { EiDialogComponent, EiNotisComponent, K } from './ei-delade';
+import { IntegrationProfile, idag, plusDagar } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
 
 export interface Aktivering {
@@ -10,13 +10,14 @@ export interface Aktivering {
 }
 
 /**
- * Planera aktivering… / Aktivera nu (6.2 steg 5, 6.3, 6.8).
+ * Planera aktivering… / Aktivera nu (6.2 steg 5, 6.3, 6.10).
  * Status blir Planerad, eller Aktiv om datumet är idag eller tidigare.
- * Har organisationen redan en aktiv profil föreslås den avslutas dagen före. Överlapp blockeras (P9).
+ * Har organisationen redan en aktiv profil föreslås den avslutas dagen före. Överlapp blockeras (P9), liksom
+ * ekonomisystem utan integration (P13).
  */
 @Component({
   selector: 'app-ei-planera',
-  imports: [EiDialogComponent, DatumValjareComponent],
+  imports: [EiDialogComponent, EiNotisComponent, DatumValjareComponent],
   template: `
     <app-ei-dialog [rubrik]="rubrik()" (stang)="stang.emit()">
       @if (!bekrafta()) {
@@ -41,6 +42,9 @@ export interface Aktivering {
           {{ bekrafta()!.name }} avslutas {{ avslutasDatum() }}. Fortsätt?
         </p>
         <p [class]="k.hjalp">Högst en aktiv integrationsprofil per organisation och dag.</p>
+        <app-ei-notis>
+          Verifikatnummer räknas per integrationsprofil och år. Kontrollera med utvecklarna att nummerserien inte krockar om bytet sker mitt i ett år.
+        </app-ei-notis>
       }
       <button fot type="button" (click)="stang.emit()" [class]="k.sekundar">Avbryt</button>
       @if (!bekrafta()) {
@@ -56,7 +60,7 @@ export interface Aktivering {
 export class EiPlaneraComponent {
   private readonly service = inject(EkonomiskIntegrationService);
   readonly k = K;
-  readonly profil = input.required<PostingProfile>();
+  readonly profil = input.required<IntegrationProfile>();
   /** false = "Aktivera nu" (dagens datum, ingen datumväljare). */
   readonly valjDatum = input(true);
   readonly rubrik = input('Planera aktivering');
@@ -65,7 +69,7 @@ export class EiPlaneraComponent {
 
   readonly datum = signal(idag());
   readonly fel = signal<string[]>([]);
-  readonly bekrafta = signal<PostingProfile | null>(null);
+  readonly bekrafta = signal<IntegrationProfile | null>(null);
   readonly avslutasDatum = computed(() => plusDagar(this.datum(), -1));
 
   ngOnInit(): void {

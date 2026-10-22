@@ -14,13 +14,14 @@ import {
   LAGE_NAMN,
   LAGE_ORDNING,
   Mapping,
-  PostingProfile,
+  IntegrationProfile,
   TransactionType,
   ValueMode,
+  INTEGRATION_NAMN,
   aktivaVarden,
   idag,
   mappningsfel,
-  sorteradeMappningar,
+  sorteraMappningar,
   standardMappning,
 } from './ei-modell';
 import { Aktivering, EiPlaneraComponent } from './ei-planera.component';
@@ -65,24 +66,29 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
                 </div>
                 <div>
                   <label for="ei-g-system" [class]="k.etikett">Ekonomisystem <span class="text-error" aria-hidden="true">*</span></label>
-                  <select id="ei-g-system" [ngModel]="systemId()" (ngModelChange)="systemId.set($event)" [class]="k.falt">
-                    @for (s of service.system(); track s.id) { <option [value]="s.id">{{ s.name }}</option> }
+                  <select id="ei-g-system" [ngModel]="systemId()" (ngModelChange)="valjSystem($event)" [class]="k.falt">
+                    @for (s of service.system(); track s.id) { <option [value]="s.id">{{ s.name }} ({{ integrationNamn[s.integrationStatus] }})</option> }
                   </select>
                 </div>
+                @if (!harIntegration()) {
+                  <div class="md:col-span-2">
+                    <app-ei-notis niva="warning">Det finns ingen integration för {{ systemNamn() }}. Profilen kan bara sparas som utkast.</app-ei-notis>
+                  </div>
+                }
                 <div class="md:col-span-2">
                   <label for="ei-g-namn" [class]="k.etikett">Namn <span class="text-error" aria-hidden="true">*</span></label>
                   <input id="ei-g-namn" type="text" autocomplete="off" [ngModel]="namn()" (ngModelChange)="namn.set($event); namnAndrat.set(true); andrad.set(true)" [class]="k.falt" />
-                  <p [class]="k.hjalp">Förslag: "Agresso – organisationens namn". Unikt inom organisationen.</p>
+                  <p [class]="k.hjalp">Förslag: "{{ systemNamn() }} – organisationens namn". Unikt inom organisationen.</p>
                 </div>
                 <div class="md:col-span-2">
                   <label for="ei-g-utga" [class]="k.etikett">Utgå från befintlig profil (valfritt)</label>
                   <select id="ei-g-utga" [ngModel]="utgaFran()" (ngModelChange)="valjUtgaFran($event)" [class]="k.falt">
                     <option value="">– Ingen –</option>
-                    @for (p of service.profiler(); track p.id) {
+                    @for (p of utgaFranVal(); track p.id) {
                       <option [value]="p.id">{{ service.hamtaOrg(p.organisationId)?.name }} – {{ p.name }}</option>
                     }
                   </select>
-                  <p [class]="k.hjalp">Kopierar flöden, böcker, mappningar och värdelistor.</p>
+                  <p [class]="k.hjalp">Kopierar flöden, böcker, mappningar och värdelistor. Bara profiler mot samma ekonomisystem kan väljas.</p>
                 </div>
               </div>
             }
@@ -111,7 +117,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
                     </label>
                   }
                 </div>
-                <p [class]="k.hjalp">Böckerna bestämmer vilka rader som skickas till Agresso.</p>
+                <p [class]="k.hjalp">Böckerna bestämmer vilka rader som skickas till ekonomisystemet. Utbetalning kräver AP och inbetalning kräver AR.</p>
               </fieldset>
             }
 
@@ -137,7 +143,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
                   <thead>
                     <tr class="border-y border-border">
                       <th scope="col" [class]="k.th + ' pl-6'">Attribut</th>
-                      <th scope="col" [class]="k.th">Agresso-dimension</th>
+                      <th scope="col" [class]="k.th">Dimension</th>
                       <th scope="col" [class]="k.th">Bokförs i</th>
                       <th scope="col" [class]="k.th">Värde i kontering</th>
                       <th scope="col" [class]="k.th + ' pr-6'">Värdelista</th>
@@ -149,7 +155,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
                       <tr class="border-b border-border-muted align-top">
                         <td class="pl-6 pr-4 py-2.5 font-medium">{{ namn }}</td>
                         <td class="px-4 py-2">
-                          <select [attr.aria-label]="'Agresso-dimension för ' + namn" [ngModel]="m.category" (ngModelChange)="sattMappning(m.attributeId, { category: $event })" [class]="k.falt + ' font-mono py-1.5'">
+                          <select [attr.aria-label]="'Dimension för ' + namn" [ngModel]="m.category" (ngModelChange)="sattMappning(m.attributeId, { category: $event })" [class]="k.falt + ' font-mono py-1.5'">
                             @for (c of dimensionerFor(m); track c) { <option [value]="c">{{ c }}</option> }
                           </select>
                         </td>
@@ -200,7 +206,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
               <dl class="grid grid-cols-[200px_1fr] gap-x-4 gap-y-2 text-sm">
                 <dt class="text-text-muted">Namn</dt><dd>{{ namn() }}</dd>
                 <dt class="text-text-muted">Utbetalande organisation</dt><dd>{{ service.hamtaOrg(orgId())?.name }}</dd>
-                <dt class="text-text-muted">Ekonomisystem</dt><dd>{{ service.hamtaSystem(systemId())?.name }}</dd>
+                <dt class="text-text-muted">Ekonomisystem</dt><dd>{{ systemNamn() }} <span class="text-text-muted">({{ integrationNamn[service.hamtaSystem(systemId())?.integrationStatus ?? 'NOT_AVAILABLE'] }})</span></dd>
                 @if (utgaFran()) { <dt class="text-text-muted">Utgår från</dt><dd>{{ service.hamtaProfil(utgaFran())?.name }}</dd> }
                 <dt class="text-text-muted">Flöden</dt><dd>{{ flodeText() }}</dd>
                 <dt class="text-text-muted">Böcker</dt><dd>{{ bokText() }}</dd>
@@ -215,6 +221,9 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
               </dl>
               <div class="space-y-2">
                 <h4 class="text-sm font-semibold">Validering</h4>
+                @if (!harIntegration()) {
+                  <app-ei-notis niva="warning">Det finns ingen integration för {{ systemNamn() }}. Profilen kan bara sparas som utkast. (P13)</app-ei-notis>
+                }
                 @if (!allaFel().length && !varningar().length) {
                   <p class="flex items-center gap-1 text-sm text-success"><span class="material-symbols-outlined text-[18px]" aria-hidden="true">check_circle</span>Inga fel eller varningar.</p>
                 }
@@ -249,7 +258,9 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
               <button type="button" (click)="nasta()" [class]="k.primar">Nästa<span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span></button>
             } @else {
               <button type="button" (click)="sparaUtkast()" [class]="k.sekundar" [disabled]="allaFel().length > 0">Spara som utkast</button>
-              <button type="button" (click)="planeraOppen.set(true)" [class]="k.primar" [disabled]="allaFel().length > 0">Planera aktivering…</button>
+              <button type="button" (click)="planeraOppen.set(true)" [class]="k.primar + ' disabled:opacity-50 disabled:cursor-not-allowed'"
+                [disabled]="allaFel().length > 0 || !harIntegration()"
+                [title]="harIntegration() ? '' : 'Det finns ingen integration för ' + systemNamn() + '. Profilen kan bara sparas som utkast.'">Planera aktivering…</button>
             }
           </div>
         </div>
@@ -284,8 +295,9 @@ export class EiProfilGuideComponent {
   readonly arendefalt: CaseField[] = ['CASE_ID', 'COUNTERPART_CODE'];
   readonly arendefaltNamn = ARENDEFALT_NAMN;
   readonly aktivaVarden = aktivaVarden;
+  readonly integrationNamn = INTEGRATION_NAMN;
 
-  readonly id = nyttId('kp');
+  readonly id = nyttId('ip');
   readonly steg = signal(1);
   readonly forsok = signal(false);
   readonly andrad = signal(false);
@@ -315,13 +327,17 @@ export class EiProfilGuideComponent {
   }
 
   readonly systemAttribut = computed(() => this.service.hamtaSystem(this.systemId())?.attributes ?? []);
+  readonly systemNamn = computed(() => this.service.hamtaSystem(this.systemId())?.name ?? '');
+  readonly harIntegration = computed(() => this.service.hamtaSystem(this.systemId())?.integrationStatus === 'AVAILABLE');
+  readonly ordning = computed(() => this.service.ordning({ economicSystemId: this.systemId() }));
+  readonly utgaFranVal = computed(() => this.service.profiler().filter((p) => p.economicSystemId === this.systemId()));
 
   attributNamn(id: string): string {
     return this.systemAttribut().find((a) => a.id === id)?.name ?? id;
   }
 
   /** Profilen som den ser ut just nu (för validering, granskning och planering). */
-  readonly utkast = computed<PostingProfile>(() => ({
+  readonly utkast = computed<IntegrationProfile>(() => ({
     id: this.id,
     name: this.namn().trim(),
     organisationId: this.orgId(),
@@ -332,20 +348,43 @@ export class EiProfilGuideComponent {
     flows: this.flows(),
     transactionTypes: this.books(),
     mappings: this.mappningar().filter((m) => this.attribut().includes(m.attributeId)),
+    technicalProperties: this.egenskaper(),
     blockedPeriods: [],
     notices: [],
     source: 'underlag',
   }));
 
-  readonly sorterade = computed(() => sorteradeMappningar(this.utkast()));
+  /** Tekniska egenskaper: från profilen man utgår från, annars samma nycklar som andra profiler mot systemet. */
+  private readonly egenskaper = computed(() => {
+    const utga = this.service.hamtaProfil(this.utgaFran());
+    return utga ? structuredClone(utga.technicalProperties) : this.service.standardEgenskaper(this.systemId());
+  });
+
+  readonly sorterade = computed(() => sorteraMappningar(this.utkast().mappings, this.ordning()));
 
   /* ---------- Steg 1 ---------- */
 
   valjOrg(id: string): void {
     this.orgId.set(id);
     this.andrad.set(true);
-    const org = this.service.hamtaOrg(id);
-    if (org && !this.namnAndrat()) this.namn.set(`Agresso – ${org.name}`);
+    this.foreslaNamn();
+  }
+
+  valjSystem(id: string): void {
+    if (id === this.systemId()) return;
+    this.systemId.set(id);
+    this.andrad.set(true);
+    // Attribut och dimensioner skiljer sig mellan ekonomisystem – börja om från steg 3.
+    this.utgaFran.set('');
+    this.attribut.set([]);
+    this.mappningar.set([]);
+    this.foreslaNamn();
+  }
+
+  /** Förslag: "{ekonomisystem} – {organisation}", så länge användaren inte har skrivit ett eget namn. */
+  private foreslaNamn(): void {
+    const org = this.service.hamtaOrg(this.orgId());
+    if (org && !this.namnAndrat()) this.namn.set(`${this.systemNamn()} – ${org.name}`);
   }
 
   valjUtgaFran(id: string): void {
@@ -354,6 +393,7 @@ export class EiProfilGuideComponent {
     const p = this.service.hamtaProfil(id);
     if (!p) return;
     this.systemId.set(p.economicSystemId);
+    this.foreslaNamn();
     this.flows.set([...p.flows]);
     this.books.set([...p.transactionTypes]);
     this.mappningar.set(structuredClone(p.mappings));
@@ -393,7 +433,7 @@ export class EiProfilGuideComponent {
       const a = this.systemAttribut().find((x) => x.id === id);
       if (!a) return;
       const upptagna = this.utkast().mappings.map((m) => m.category);
-      this.mappningar.update((ms) => [...ms, standardMappning(a, upptagna, this.books())]);
+      this.mappningar.update((ms) => [...ms, standardMappning(a, this.ordning(), upptagna, this.books())]);
     }
   }
 
@@ -453,12 +493,13 @@ export class EiProfilGuideComponent {
 
   readonly allaFel = computed(() => [...this.fel1(), ...this.fel2(), ...this.fel3(), ...this.fel4()]);
 
-  /** P8: valbara attribut utan aktiva värden. */
-  readonly varningar = computed(() =>
-    this.utkast()
+  /** P8: valbara attribut utan aktiva värden. P14: flöde utan motsvarande reskontrabok. */
+  readonly varningar = computed(() => [
+    ...this.utkast()
       .mappings.filter((m) => m.mode === 'SELECTABLE' && !aktivaVarden(m).length)
       .map((m) => `${this.attributNamn(m.attributeId)}: Inga värden att välja. Lägg till värden innan profilen aktiveras.`),
-  );
+    ...this.service.bokVarningar(this.utkast()),
+  ]);
 
   readonly stegFel = computed(() => [this.fel1, this.fel2, this.fel3, this.fel4][this.steg() - 1]?.() ?? []);
 
@@ -498,7 +539,7 @@ export class EiProfilGuideComponent {
     this.router.navigate([EI_BAS, 'integrationsprofiler']);
   }
 
-  private ren(): PostingProfile {
+  private ren(): IntegrationProfile {
     const p = this.utkast();
     return {
       ...p,
@@ -518,7 +559,7 @@ export class EiProfilGuideComponent {
   }
 
   planera(a: Aktivering): void {
-    if (this.allaFel().length) return;
+    if (this.allaFel().length || !this.harIntegration()) return;
     this.planeraOppen.set(false);
     this.service.sparaProfil(this.ren(), '');
     this.service.aktivera(this.id, a.datum, a.avslutaId);

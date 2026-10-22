@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { anonymiseraOmAktivt } from './delade/datalage';
 
 export type UtlysningStatus = 'Aktiv' | 'Inaktiv';
 export type UtlysningEtikett = 'Kommande' | 'Öppen' | 'Utlöpt' | 'Dold';
@@ -98,7 +99,7 @@ const GRONARE_EUROPA =
 const SMART_EUROPA =
   'Ett mer konkurrenskraftigt och smart Europa genom främjande av innovativ och smart ekonomisk omvandling och regional IKT-konnektivitet';
 
-const UTLYSNINGAR: Utlysning[] = [
+const UTLYSNINGAR: Utlysning[] = anonymiseraOmAktivt<Utlysning[]>([
   { id: 24, namn: 'Grön omställning i industrin hösten 2026', interntNamn: 'GRÖN-H26', organisation: 'Tillväxtverket', stodform: `EU 2027 REG > Östra Mellansverige > ${GRONARE_EUROPA} > Ett grönare och koldioxidsnålare Östra Mellansverige`, skapad: '2026-09-02', startdatum: '2026-09-15', slutdatum: '2026-11-30', finansieringar: [1] },
   { id: 23, namn: 'Digitaliseringscheckar för småföretag', interntNamn: 'DIGI-26', organisation: 'Region Skåne', stodform: 'Företagsstöd > Konsultcheck > Digitalisering', skapad: '2026-08-28', startdatum: '2026-09-01', slutdatum: '2026-10-15', finansieringar: [4] },
   { id: 22, namn: 'Investeringsstöd för landsbygdsföretag', interntNamn: 'INV-LAND-26', organisation: 'Region Norrbotten', stodform: 'Företagsstöd > Regionalt investeringsstöd', skapad: '2026-08-20', startdatum: '2026-08-20', slutdatum: '2026-09-22', finansieringar: [2] },
@@ -124,7 +125,7 @@ const UTLYSNINGAR: Utlysning[] = [
   { id: 25, namn: 'Stöd till kommersiell service i glesbygd 2025', interntNamn: 'KOMSERV', organisation: 'Region Jämtland Härjedalen', stodform: 'Företagsstöd > Kommersiell service > Stöd till dagligvarubutiker i gles- och landsbygd', skapad: '2025-08-18', startdatum: '2025-08-20', slutdatum: '2025-09-22' },
   { id: 2, namn: 'Automationscheckar för industriföretag', interntNamn: 'AUTO-25', organisation: 'Region Värmland', stodform: 'Företagsstöd > Konsultcheck > Automation', skapad: '2025-08-05', startdatum: '2025-09-01', slutdatum: '2025-11-28', stangdIAdmin: true },
   { id: 1, namn: 'Etableringsstöd för nyanlända företagare', interntNamn: 'ETAB-25', organisation: 'Västra Götalandsregionen', stodform: 'Företagsstöd > Etableringsstöd', skapad: '2025-06-30', startdatum: '2025-08-01', slutdatum: '2025-10-31', stangdIAdmin: true },
-];
+]);
 
 export interface FinansieringsmedelPost {
   id: number;

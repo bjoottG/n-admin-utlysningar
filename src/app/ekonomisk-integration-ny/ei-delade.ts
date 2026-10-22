@@ -10,10 +10,11 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ToppmenyComponent } from '../delade/toppmeny.component';
 import { BEGREPP, KALLA_TEXT, KodRad, Source } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
+import { kontrolleraAnonymisering } from './ei-anonymiseringskontroll';
 
 export const EI_BAS = '/ekonomisk-integration-ny';
 
@@ -182,30 +183,32 @@ export class EiDialogComponent {
   template: `
     <section class="border border-border bg-surface">
       <h3 class="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-text border-b border-border-muted">
-        Kodsträng till Agresso (förhandsvisning)
+        Kodsträng till {{ system() }} (förhandsvisning)
         <app-ei-begrepp term="Kodsträng" />
       </h3>
       <ul class="px-4 py-3 space-y-1.5 font-mono text-[13px] text-text list-none m-0" aria-label="Kodsträng per bok">
         @for (rad of rader(); track rad.bok) {
           <li class="leading-relaxed">
-            <span class="font-semibold">{{ rad.bok + ':' }}</span>{{ ' ' }}
-            @if (rad.delar.length) {
+            @if (rad.varning) {
+              <span class="inline-flex items-start gap-1 font-sans text-warning-dark">
+                <span class="material-symbols-outlined text-[16px] text-warning mt-0.5" aria-hidden="true">warning</span>{{ rad.varning }}
+              </span>
+            } @else {
+              <span class="font-semibold">{{ rad.bok + ':' }}</span>{{ ' ' }}
               @for (d of rad.delar; track d.dim; let sist = $last) {
                 {{ d.dim + ' ' }}<span [class]="d.platshallare ? 'italic text-text-muted' : ''">{{ d.varde }}</span>{{ sist ? '' : ' · ' }}
               }
-            } @else {
-              <span class="italic text-text-muted font-sans">används inte av något attribut</span>
             }
           </li>
-        } @empty {
-          <li class="text-text-muted font-sans">Profilen har inga böcker.</li>
         }
       </ul>
+      <p class="px-4 pb-3 text-[12px] text-text-muted">Huvudboksraden (GL) och reskontraraden: AP vid utbetalning, AR vid inbetalning.</p>
     </section>
   `,
 })
 export class EiKodstrangComponent {
   readonly rader = input.required<KodRad[]>();
+  readonly system = input('Agresso');
 }
 
 /* ============================================================
@@ -344,7 +347,7 @@ export class EiSokbarListaComponent {
 }
 
 /* ============================================================
-   Ram: brödsmulor, rubrik, ingress, trappa, flikar
+   Ram: brödsmulor, rubrik, ingress, trappa, banners, flikar
    ============================================================ */
 
 export interface Brodsmula {
@@ -352,18 +355,18 @@ export interface Brodsmula {
   lank?: string;
   query?: Record<string, string>;
 }
-export type EiFlik = 'ekonomisystem' | 'profiler' | 'mallar';
+export type EiFlik = 'ekonomisystem' | 'profiler' | 'konteringar';
 
 const TRAPPA = [
-  { steg: 1, namn: 'Ekonomisystem', vad: 'Vad Agresso kan ta emot', agare: 'Utvecklare', prototyp: 'Skrivskyddat' },
-  { steg: 2, namn: 'Integrationsprofil', vad: 'Hur en utbetalande organisation konterar', agare: 'Ekonomiadministratör', prototyp: 'Skapa och hantera' },
-  { steg: 3, namn: 'Konteringsmall', vad: 'Namngivna valda värden, med versioner', agare: 'Ekonom', prototyp: 'Skapa och hantera' },
-  { steg: 4, namn: 'Kontering', vad: 'Det som skickas till Agresso', agare: 'Systemet', prototyp: 'Förhandsvisning (kodsträng)' },
+  { steg: 1, namn: 'Ekonomisystem', vad: 'Vad ett ekonomisystem kan ta emot: attribut, dimensioner, böcker, flöden', agare: 'Utvecklare', prototyp: 'Skrivskyddat' },
+  { steg: 2, namn: 'Integrationsprofil', vad: 'Hur en utbetalande organisation är kopplad till sitt ekonomisystem', agare: 'Ekonomiadministratör', prototyp: 'Skapa och hantera' },
+  { steg: 3, namn: 'Kontering', vad: 'Valda värden för finansieringsmedel, beslutande organisation och flöde, med versioner', agare: 'Ekonom', prototyp: 'Skapa och hantera' },
+  { steg: 4, namn: 'Kodsträng', vad: 'Det som skickas till Agresso vid en utbetalning', agare: 'Systemet', prototyp: 'Bara förhandsvisning' },
 ];
 
 @Component({
   selector: 'app-ei-ram',
-  imports: [RouterLink, ToppmenyComponent, EiDialogComponent],
+  imports: [RouterLink, ToppmenyComponent, EiDialogComponent, EiNotisComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-surface-subtle font-sans">
       <app-toppmeny />
@@ -381,13 +384,30 @@ const TRAPPA = [
       </nav>
 
       <div class="flex-1 px-6 pb-10">
+        @if (service.anonymiserat) {
+          <div class="mb-3">
+            <app-ei-notis>Anonymiserade exempeldata: myndigheter, regioner och vissa koder har fiktiva namn.</app-ei-notis>
+          </div>
+        }
+
+        <!-- Global spärrbanner (6.8) -->
+        @if (service.sparradeProfiler().length; as n) {
+          <div class="mb-3">
+            <app-ei-notis niva="error">
+              Utbetalningar är spärrade för {{ n }} integrationsprofil(er).
+              <a [routerLink]="bas + '/integrationsprofiler'" [queryParams]="{ sparrade: 'ja' }" class="font-medium underline hover:no-underline">Visa spärrade integrationsprofiler</a>
+            </app-ei-notis>
+          </div>
+        }
+
         <!-- Sidhuvud -->
         <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
           <div>
             <h1 class="text-2xl font-semibold text-text leading-tight">Ekonomisk integration (NY)</h1>
-            <p class="text-sm text-text-secondary mt-2 max-w-[78ch]">
-              Ny modell för hur NYPS admin sätter upp konteringar mot Agresso. Ekonomisystemet anger vad Agresso kan ta emot,
-              integrationsprofilen hur en utbetalande organisation konterar och konteringsmallen vilka värden som väljs.
+            <p class="text-sm text-text-secondary mt-2 max-w-[80ch]">
+              Steg 1 av den nya ekonomiska integrationen. Ekonomisystemet anger vad systemet kan ta emot, integrationsprofilen hur en
+              utbetalande organisation är kopplad till sitt ekonomisystem och konteringen vilka värden som används för ett finansieringsmedel,
+              en beslutande organisation och ett flöde. Finansieringsmedel och utlysningar fungerar som idag.
             </p>
           </div>
           <div class="flex items-center gap-3">
@@ -397,11 +417,17 @@ const TRAPPA = [
                 {{ text }}
               </span>
             }
-            <button type="button" (click)="visaAterstall.set(true)"
-              class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border bg-surface text-text-secondary hover:bg-component-hover transition-colors">
-              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">restart_alt</span>
-              Återställ exempeldata
-            </button>
+            <span class="group relative inline-flex">
+              <button type="button" (click)="visaAterstall.set(true)" aria-describedby="ei-aterstall-tips"
+                class="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border bg-surface text-text-secondary hover:bg-component-hover transition-colors">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">restart_alt</span>
+                Återställ exempeldata
+              </button>
+              <span id="ei-aterstall-tips" role="tooltip"
+                class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity absolute z-[1070] top-full right-0 mt-1 w-60 px-3 py-2 text-[13px] leading-snug text-text-inverse bg-surface-inverse shadow-lg">
+                Ändringar sparas separat för varje dataläge. Bara det aktiva dataläget ({{ service.anonymiserat ? 'anonymiserade' : 'riktiga' }} exempeldata) återställs.
+              </span>
+            </span>
           </div>
         </div>
 
@@ -410,24 +436,30 @@ const TRAPPA = [
           <button type="button" (click)="service.vaxlaTrappa()" [attr.aria-expanded]="!service.trappaHopfalld()" aria-controls="ei-trappa"
             class="flex items-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-text text-left hover:bg-component-hover">
             <span class="material-symbols-outlined text-[20px] transition-transform" [class.-rotate-90]="service.trappaHopfalld()" aria-hidden="true">expand_more</span>
-            Trappan: ekonomisystem, integrationsprofil, konteringsmall och kontering
+            Trappan: ekonomisystem, integrationsprofil, kontering och kodsträng
           </button>
           @if (!service.trappaHopfalld()) {
-            <ol id="ei-trappa" class="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-stretch gap-2 px-4 pb-4 pt-1 list-none m-0">
-              @for (s of trappa; track s.steg; let sist = $last) {
-                <li class="flex flex-col px-3 py-2.5 border border-border-muted bg-surface-subtle" [style.margin-top.px]="(4 - s.steg) * 6">
-                  <span class="text-[12px] text-text-muted">Steg {{ s.steg }}</span>
-                  <span class="text-sm font-semibold text-text">{{ s.namn }}</span>
-                  <span class="text-[13px] text-text-secondary leading-snug">{{ s.vad }}</span>
-                  <span class="mt-auto pt-1.5 text-[12px] text-text-muted">Ägs av <span class="text-text">{{ s.agare }}</span> · {{ s.prototyp }}</span>
-                </li>
-                @if (!sist) {
-                  <li class="flex items-center text-text-muted" aria-hidden="true">
-                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+            <div id="ei-trappa" class="px-4 pb-4 pt-1">
+              <ol class="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-stretch gap-2 list-none m-0 p-0">
+                @for (s of trappa; track s.steg; let sist = $last) {
+                  <li class="flex flex-col px-3 py-2.5 border border-border-muted bg-surface-subtle" [style.margin-top.px]="(4 - s.steg) * 6">
+                    <span class="text-[12px] text-text-muted">Steg {{ s.steg }}</span>
+                    <span class="text-sm font-semibold text-text">{{ s.namn }}</span>
+                    <span class="text-[13px] text-text-secondary leading-snug">{{ s.vad }}</span>
+                    <span class="mt-auto pt-1.5 text-[12px] text-text-muted">Ägs av <span class="text-text">{{ s.agare }}</span> · {{ s.prototyp }}</span>
                   </li>
+                  @if (!sist) {
+                    <li class="flex items-center text-text-muted" aria-hidden="true">
+                      <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                    </li>
+                  }
                 }
-              }
-            </ol>
+              </ol>
+              <p class="flex items-center gap-1.5 mt-3 text-sm text-text">
+                <span class="material-symbols-outlined text-[18px] text-info" aria-hidden="true">search</span>
+                Vid utbetalning hittas konteringen med ärendets finansieringsmedel, beslutande organisation och flöde.
+              </p>
+            </div>
           }
         </section>
 
@@ -451,10 +483,9 @@ const TRAPPA = [
     @if (visaAterstall()) {
       <app-ei-dialog rubrik="Återställ exempeldata?" roll="alertdialog" (stang)="visaAterstall.set(false)">
         <p class="text-sm text-text">All ändrad data i Ekonomisk integration (NY) ersätts med exempeldatan. Fortsätt?</p>
-        <button fot type="button" (click)="visaAterstall.set(false)"
-          class="px-4 py-2 text-sm border border-border text-text-secondary hover:bg-component-hover transition-colors">Avbryt</button>
-        <button fot type="button" (click)="aterstall()"
-          class="px-4 py-2 text-sm bg-primary text-on-primary hover:bg-primary-hover transition-colors">Återställ</button>
+        <p [class]="k.hjalp">Gäller bara {{ service.anonymiserat ? 'anonymiserade' : 'riktiga' }} exempeldata. Det andra dataläget påverkas inte.</p>
+        <button fot type="button" (click)="visaAterstall.set(false)" [class]="k.sekundar">Avbryt</button>
+        <button fot type="button" (click)="aterstall()" [class]="k.primar">Återställ</button>
       </app-ei-dialog>
     }
   `,
@@ -465,11 +496,13 @@ export class EiRamComponent {
   readonly brodsmulor = input<Brodsmula[]>([]);
   readonly visaAterstall = signal(false);
   readonly trappa = TRAPPA;
+  readonly bas = EI_BAS;
+  readonly k = K;
 
   readonly flikar: { id: EiFlik; namn: string; lank: string }[] = [
     { id: 'ekonomisystem', namn: 'Ekonomisystem', lank: `${EI_BAS}/ekonomisystem` },
     { id: 'profiler', namn: 'Integrationsprofiler', lank: `${EI_BAS}/integrationsprofiler` },
-    { id: 'mallar', namn: 'Konteringsmallar', lank: `${EI_BAS}/konteringsmallar` },
+    { id: 'konteringar', namn: 'Konteringar', lank: `${EI_BAS}/konteringar` },
   ];
 
   readonly allaSmulor = computed<Brodsmula[]>(() => {
@@ -480,6 +513,13 @@ export class EiRamComponent {
       ...this.brodsmulor(),
     ];
   });
+
+  constructor() {
+    // Utvecklarfunktion: `await eiKontrolleraAnonymisering()` i konsolen listar förbjudna ord per vy.
+    const router = inject(Router);
+    (window as unknown as Record<string, unknown>)['eiKontrolleraAnonymisering'] = () =>
+      kontrolleraAnonymisering(router, this.service);
+  }
 
   aterstall(): void {
     this.service.aterstallExempeldata();
@@ -506,6 +546,7 @@ export const K = {
   fel: 'flex items-center gap-1 mt-1.5 text-[13px] text-error',
   th: 'px-4 py-2.5 font-semibold text-text text-left',
   status: 'inline-block px-2 py-0.5 text-xs font-medium rounded-sm whitespace-nowrap',
+  chipLiten: 'inline-block px-1 py-px text-[11px] font-medium rounded-sm',
   chip: 'inline-block px-1.5 py-px font-mono text-[12px] rounded-sm bg-surface-neutral text-on-surface-neutral border border-border',
   lank: 'text-interactive hover:underline',
 };

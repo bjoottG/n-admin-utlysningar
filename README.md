@@ -50,13 +50,15 @@ Idag måste handläggaren först söka upp en organisation för att överhuvudta
 - `/utlysningar-ny` visar samma utlysningar som `/utlysningar` men i en ny variant: valet av **finansieringsmedel** är ersatt av **Finansiering** (från administrationsområdet Finansiering) i guiden och detaljvyn, listan har en kolumn Finansiering och utlysningar kan **tas bort** (papperskorg per rad samt knapp i detaljvyn, med bekräftelse).
 - Tekniskt återanvänds list-, guide- och detaljkomponenterna via route-data `variant: 'ny'`; länkar, brödsmulor och validering följer varianten. Utlysningen har fältet `finansieringar` (id:n) vid sidan av `finansieringsmedel`.
 
-## Ekonomisk integration (NY) (2026-10-19)
+## Ekonomisk integration (NY) (version 3, 2026-10-22)
 
-- `/ekonomisk-integration-ny` (första rutan på startsidan) testar en ny modell för konteringar mot Agresso i fyra steg: **Ekonomisystem** (skrivskyddat) → **Integrationsprofil** → **Konteringsmall** (med versioner) → **Kontering** (förhandsvisning av kodsträng). Befintlig "Ekonomisk integration" är orörd.
-- Tre flikar: Ekonomisystem (attribut, dimensioner, mappningsmatris m.m.), Integrationsprofiler (lista, guide i fem steg, Översikt/Mappning/Värdelistor/Konteringsmallar/Spärrperioder) och Konteringsmallar (lista, ny/kopia, versioner, skillnad och kodsträng).
-- Exempeldatan (seed) ligger i `src/app/ekonomisk-integration-ny/ei-seed.ts` och tolkas vid första start. Ändringar sparas i `localStorage`; knappen **Återställ exempeldata** läser in seeden igen. Data märkt `example`/`assumption` visas med etiketterna Exempeldata och Antagande.
-- Statusar, "Används i", varningar (regler P/V/M) och kodsträng räknas fram vid visning utifrån systemklockan.
-- Koden ligger i `src/app/ekonomisk-integration-ny/` och laddas lazy (`ei.routes.ts`).
+- `/ekonomisk-integration-ny` (första rutan på startsidan) visar steg 1 av den nya ekonomiska integrationen i fyra steg: **Ekonomisystem** (skrivskyddat, Agresso och Raindance) → **Integrationsprofil** → **Kontering** (med versioner) → **Kodsträng** (förhandsvisning). Befintlig "Ekonomisk integration" är orörd. Finansieringsmedel och utlysningar fungerar som idag.
+- Tre flikar: Ekonomisystem (attribut, dimensioner, mappningsmatris, böcker, flöden, värdeursprung, ersatta attribut), Integrationsprofiler (lista med spärrar, "Stoppa alla utbetalningar", guide i fem steg, Översikt med tekniska egenskaper, Mappning, Värdelistor, Konteringar, Spärrperioder) och Konteringar (nyckel finansieringsmedel + beslutande organisation + flöde, unik i hela systemet, versioner, skillnad, kodsträng, kopia och "Testa uppslag").
+- Konteringens namn räknas fram ur nyckeln. Konsumtionskonto väljs per version och är märkt "Tillfälligt".
+- **Datalägen**: knappen "Exempeldata: Riktiga | Anonymiserade" i sidhuvudet. Varje läge har egen lagrad data i `localStorage`; byte laddar om sidan. Det anonymiserade datasetet skapas ur seeden med namntabellen i `src/app/delade/datalage.ts`, som också används för Utlysningar och Finansiering (bara namnen i tabellen byts där).
+- Anonymiseringskontroll: kör `await eiKontrolleraAnonymisering()` i konsolen i anonymiserat läge. Den går igenom alla vyer i området och listar förbjudna ord.
+- Exempeldatan (seed v3) ligger i `src/app/ekonomisk-integration-ny/ei-seed.ts`. Lagrad data från tidigare versioner läses inte in. **Återställ exempeldata** återställer bara det aktiva dataläget.
+- Statusar, "Används i", varningar (regler P, V, S och K) och kodsträng räknas fram vid visning utifrån systemklockan.
 
 ## Kom igång
 
