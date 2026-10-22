@@ -4,7 +4,6 @@ import { RouterLink } from '@angular/router';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import {
   EI_BAS,
-  EiBegreppComponent,
   EiDialogComponent,
   EiKodstrangComponent,
   EiNotisComponent,
@@ -16,13 +15,13 @@ import { EkonomiskIntegrationService, Uppslagsresultat } from './ei.service';
 /** Testa uppslag (7.5) – hur systemet hittar konteringen vid en utbetalning. */
 @Component({
   selector: 'app-ei-testa-uppslag',
-  imports: [FormsModule, RouterLink, DatumValjareComponent, EiDialogComponent, EiBegreppComponent, EiKodstrangComponent, EiNotisComponent],
+  imports: [FormsModule, RouterLink, DatumValjareComponent, EiDialogComponent, EiKodstrangComponent, EiNotisComponent],
   template: `
     <app-ei-dialog variant="panel" rubrik="Testa uppslag" (stang)="stang.emit()">
       <p class="text-sm text-text-secondary">
         Vid en utbetalning letar systemet upp den aktiva konteringen med ärendets finansieringsmedel, beslutande organisation och flöde.
         Den version som gäller på utbetalningsdagen används.
-        <app-ei-begrepp term="Uppslag" />
+
       </p>
       <form (ngSubmit)="testa()" class="space-y-4">
         <div>

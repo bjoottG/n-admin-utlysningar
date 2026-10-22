@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { EI_BAS, EiBegreppComponent, EiDialogComponent, EiKallaComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
+import { EI_BAS, EiDialogComponent, EiKallaComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
 import {
   IntegrationProfile,
   Organisation,
@@ -22,12 +22,12 @@ interface Grupp {
 
 @Component({
   selector: 'app-ei-profiler-lista',
-  imports: [FormsModule, RouterLink, EiRamComponent, EiBegreppComponent, EiKallaComponent, EiDialogComponent, EiNotisComponent],
+  imports: [FormsModule, RouterLink, EiRamComponent, EiKallaComponent, EiDialogComponent, EiNotisComponent],
   template: `
     <app-ei-ram flik="profiler">
       <div class="flex items-center justify-between gap-4 flex-wrap mb-3">
         <h2 class="flex items-center gap-1 text-lg font-semibold text-text">
-          Integrationsprofiler <app-ei-begrepp term="Integrationsprofil" />
+          Integrationsprofiler
         </h2>
         <div class="flex items-center gap-2">
           <button type="button" (click)="oppnaStoppa()" [class]="k.fara">
@@ -52,14 +52,14 @@ interface Grupp {
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-border">
-              <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Organisation <app-ei-begrepp term="Utbetalande organisation" /></span></th>
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Integrationsprofil <app-ei-begrepp term="Integrationsprofil" /></span></th>
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Ekonomisystem <app-ei-begrepp term="Ekonomisystem" /></span></th>
+              <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Organisation</span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Integrationsprofil</span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Ekonomisystem</span></th>
               <th scope="col" [class]="k.th">Status</th>
               <th scope="col" [class]="k.th">Giltig</th>
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Konteringar <app-ei-begrepp term="Kontering" /></span></th>
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Spärr <app-ei-begrepp term="Spärrperiod" /></span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Attribut</span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Konteringar</span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Spärr</span></th>
               <th scope="col" [class]="k.th + ' pr-5'">Varningar</th>
             </tr>
           </thead>

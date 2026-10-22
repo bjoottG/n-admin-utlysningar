@@ -1,6 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { EI_BAS, EiBegreppComponent, EiKallaComponent, K } from './ei-delade';
+import { EI_BAS, EiKallaComponent, K } from './ei-delade';
 import {
   FLODE_NAMN,
   KONTERINGSSTATUS_NAMN,
@@ -14,21 +14,21 @@ import { EkonomiskIntegrationService } from './ei.service';
 /** Lista med konteringar (7.1) – används i Del 3 och på profilens flik Konteringar. */
 @Component({
   selector: 'app-ei-kontering-tabell',
-  imports: [RouterLink, EiBegreppComponent, EiKallaComponent],
+  imports: [RouterLink, EiKallaComponent],
   template: `
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border">
-            <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Kontering <app-ei-begrepp term="Kontering" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Finansieringsmedel <app-ei-begrepp term="Finansieringsmedel" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Beslutande organisation <app-ei-begrepp term="Beslutande organisation" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Flöde <app-ei-begrepp term="Flöde" /></span></th>
+            <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Kontering</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Finansieringsmedel</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Beslutande organisation</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Flöde</span></th>
             @if (visaProfil()) {
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Utbetalande organisation <app-ei-begrepp term="Utbetalande organisation" /></span></th>
-              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Integrationsprofil <app-ei-begrepp term="Integrationsprofil" /></span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Utbetalande organisation</span></th>
+              <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Integrationsprofil</span></th>
             }
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Gällande version <app-ei-begrepp term="Version" /></span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Gällande version</span></th>
             <th scope="col" [class]="k.th">Status</th>
             <th scope="col" [class]="k.th + ' pr-5'">Varningar</th>
           </tr>

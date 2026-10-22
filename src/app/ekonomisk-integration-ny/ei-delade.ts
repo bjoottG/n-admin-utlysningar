@@ -12,42 +12,11 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToppmenyComponent } from '../delade/toppmeny.component';
-import { BEGREPP, KALLA_TEXT, KodRad, Source } from './ei-modell';
+import { KALLA_TEXT, KodRad, Source } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
 import { kontrolleraAnonymisering } from './ei-anonymiseringskontroll';
 
 export const EI_BAS = '/ekonomisk-integration-ny';
-
-/* ============================================================
-   Begrepp – informationsikon med förklaring (avsnitt 2)
-   ============================================================ */
-
-@Component({
-  selector: 'app-ei-begrepp',
-  template: `
-    <span class="group relative inline-flex align-middle">
-      <button
-        type="button"
-        class="inline-flex items-center justify-center w-5 h-5 rounded-full text-text-muted hover:text-interactive focus:outline-none focus-visible:shadow-focus cursor-help"
-        [attr.aria-label]="'Vad betyder ' + term() + '?'"
-        [attr.aria-describedby]="id">
-        <span class="material-symbols-outlined text-[16px]" aria-hidden="true">info</span>
-      </button>
-      <span
-        [id]="id"
-        role="tooltip"
-        class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity absolute z-[1070] top-full left-1/2 -translate-x-1/2 mt-1 w-64 px-3 py-2 text-[13px] font-normal normal-case leading-snug text-left text-text-inverse bg-surface-inverse shadow-lg whitespace-normal">
-        <span class="font-semibold">{{ term() }}:</span> {{ forklaring() }}
-      </span>
-    </span>
-  `,
-})
-export class EiBegreppComponent {
-  private static raknare = 0;
-  readonly term = input.required<string>();
-  readonly id = `ei-begrepp-${++EiBegreppComponent.raknare}`;
-  readonly forklaring = computed(() => BEGREPP[this.term()] ?? '');
-}
 
 /* ============================================================
    Etikett för osäker data: Exempeldata / Antagande
@@ -179,12 +148,11 @@ export class EiDialogComponent {
 @Component({
   selector: 'app-ei-kodstrang',
   host: { class: 'block' },
-  imports: [EiBegreppComponent],
   template: `
     <section class="border border-border bg-surface">
       <h3 class="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold text-text border-b border-border-muted">
         Kodsträng till {{ system() }} (förhandsvisning)
-        <app-ei-begrepp term="Kodsträng" />
+
       </h3>
       <ul class="px-4 py-3 space-y-1.5 font-mono text-[13px] text-text list-none m-0" aria-label="Kodsträng per bok">
         @for (rad of rader(); track rad.bok) {

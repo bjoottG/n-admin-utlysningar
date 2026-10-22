@@ -283,38 +283,6 @@ export function integrationKlass(s: EconomicSystem['integrationStatus']): string
 }
 export const SPARRAD_KLASS = 'bg-error text-on-error border border-error';
 
-/** Begrepp (avsnitt 2) – visas som informationsikon vid rubriker och kolumnrubriker. */
-export const BEGREPP: Record<string, string> = {
-  Ekonomisystem: 'Vad ett ekonomisystem kan ta emot. Sätts av utvecklare.',
-  Integrationsprofil:
-    'Hur en utbetalande organisation är kopplad till sitt ekonomisystem: mappning, värdelistor, tekniska egenskaper och spärrar.',
-  Mappning:
-    'En rad i integrationsprofilen: ett attribut kopplat till en dimension, med böcker, värdeläge och värdelista.',
-  Attribut: 'Ett konteringsbegrepp, till exempel Verksamhet.',
-  Dimension: 'Plats i kodsträngen. I Agresso DIM1–DIM7, INVOICE_NO och CURRENCY.',
-  'Bokförs i':
-    'Vilka böcker attributet följer med till: Huvudbok (GL), Leverantörsreskontra (AP), Kundreskontra (AR). Flerval.',
-  Värdelista: 'De tillåtna värdena för ett attribut i en integrationsprofil.',
-  'Värde i kontering':
-    'Hur attributets värde bestäms: Väljs i konteringen, Fast värde, Hämtas från ärendet eller Följer flödet.',
-  Flöde: 'Utbetalning (UTB) eller Inbetalning (INB). Avgör om reskontraraden blir AP eller AR.',
-  'Tekniska egenskaper':
-    'Inställningar för utbetalningsfilen, till exempel vilken Agresso-klient som tar emot den. Sätts av utvecklare.',
-  Spärrperiod: 'En period då utbetalningar via integrationsprofilen är stoppade.',
-  Finansieringsmedel: 'Som idag: anslag, uppdrag, deluppdrag och kontotyp.',
-  'Beslutande organisation': 'Organisationen som beslutar om stödet.',
-  'Utbetalande organisation': 'Organisationen som betalar ut och äger integrationsprofilen.',
-  Kontering:
-    'De valda värdena för ett finansieringsmedel, en beslutande organisation och ett flöde. Har versioner.',
-  Version:
-    'En kontering har versioner med "giltig från". Den version som gäller på utbetalningsdagen används.',
-  Kodsträng: 'Förhandsvisning av raderna som skickas till Agresso: huvudboksraden och reskontraraden.',
-  Uppslag:
-    'Hur systemet hittar konteringen vid en utbetalning: finansieringsmedel + beslutande organisation + flöde.',
-  Dataläge:
-    'Vilken exempeldata prototypen visar: riktiga exempeldata, eller anonymiserade där myndigheter och regioner har fiktiva namn.',
-};
-
 export const KALLA_TEXT: Record<'example' | 'assumption', { etikett: string; tooltip: string }> = {
   example: {
     etikett: 'Exempeldata',

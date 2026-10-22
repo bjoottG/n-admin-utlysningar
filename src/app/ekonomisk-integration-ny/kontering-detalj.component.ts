@@ -5,7 +5,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import {
   EI_BAS,
-  EiBegreppComponent,
   EiDialogComponent,
   EiKallaComponent,
   EiKodstrangComponent,
@@ -62,7 +61,6 @@ interface NyVersion {
     RouterLink,
     DatumValjareComponent,
     EiRamComponent,
-    EiBegreppComponent,
     EiDialogComponent,
     EiKallaComponent,
     EiKodstrangComponent,
@@ -118,13 +116,13 @@ interface NyVersion {
           <!-- Nyckel -->
           <section class="bg-surface border border-border">
             <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">
-              Nyckel <app-ei-begrepp term="Uppslag" />
+              Nyckel
               <span class="ml-auto inline-flex items-center gap-1 text-[12px] font-normal text-text-muted">
                 <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>Kan inte ändras
               </span>
             </h3>
             <dl class="grid grid-cols-[180px_1fr] gap-x-4 gap-y-2 px-5 py-3 text-sm">
-              <dt class="text-text-muted inline-flex items-center gap-1">Finansieringsmedel <app-ei-begrepp term="Finansieringsmedel" /></dt>
+              <dt class="text-text-muted inline-flex items-center gap-1">Finansieringsmedel</dt>
               <dd>
                 <span class="font-medium">{{ fm?.shortName }}</span> <app-ei-kalla [kalla]="fm?.source" />
                 <span class="block text-text-secondary">Anslag: {{ fm?.anslag }}</span>
@@ -132,9 +130,9 @@ interface NyVersion {
                 @if (fm?.deluppdrag) { <span class="block text-text-secondary">Deluppdrag: {{ fm!.deluppdrag }}</span> }
                 <span class="block text-text-secondary">Kontotyp: {{ fm?.kontotyp ?? 'saknas' }}</span>
               </dd>
-              <dt class="text-text-muted inline-flex items-center gap-1">Beslutande organisation <app-ei-begrepp term="Beslutande organisation" /></dt>
+              <dt class="text-text-muted inline-flex items-center gap-1">Beslutande organisation</dt>
               <dd>{{ service.hamtaBeslutande(t.decidingOrganisationId)?.name }}</dd>
-              <dt class="text-text-muted inline-flex items-center gap-1">Flöde <app-ei-begrepp term="Flöde" /></dt>
+              <dt class="text-text-muted inline-flex items-center gap-1">Flöde</dt>
               <dd>{{ flodeNamn[t.flow] }} ({{ t.flow }})</dd>
             </dl>
             <p class="px-5 pb-3 text-[13px] text-text-muted">
@@ -145,7 +143,7 @@ interface NyVersion {
 
           <!-- Integrationsprofil och beskrivning -->
           <section class="bg-surface border border-border">
-            <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">Integrationsprofil <app-ei-begrepp term="Integrationsprofil" /></h3>
+            <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">Integrationsprofil</h3>
             <dl class="grid grid-cols-[180px_1fr] gap-x-4 gap-y-2 px-5 py-3 text-sm">
               <dt class="text-text-muted">Integrationsprofil</dt>
               <dd><a [routerLink]="bas + '/integrationsprofiler/' + p.id" [class]="k.lank">{{ p.name }}</a></dd>
@@ -162,7 +160,7 @@ interface NyVersion {
 
           <!-- Versioner -->
           <section class="bg-surface border border-border xl:col-span-2">
-            <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">Versioner <app-ei-begrepp term="Version" /></h3>
+            <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold border-b border-border-muted">Versioner</h3>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
@@ -214,10 +212,10 @@ interface NyVersion {
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-border">
-                      <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
+                      <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Attribut</span></th>
                       <th scope="col" [class]="k.th">Värde</th>
-                      <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Ursprung <app-ei-begrepp term="Värde i kontering" /></span></th>
-                      <th scope="col" [class]="k.th + ' pr-5'"><span class="inline-flex items-center gap-1">Bokförs i <app-ei-begrepp term="Bokförs i" /></span></th>
+                      <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Ursprung</span></th>
+                      <th scope="col" [class]="k.th + ' pr-5'"><span class="inline-flex items-center gap-1">Bokförs i</span></th>
                     </tr>
                   </thead>
                   <tbody>

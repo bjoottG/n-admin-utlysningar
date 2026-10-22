@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { EI_BAS, EiBegreppComponent, EiDialogComponent, EiKallaComponent, K } from './ei-delade';
+import { EI_BAS, EiDialogComponent, EiKallaComponent, K } from './ei-delade';
 import {
   ARENDEFALT_NAMN,
   BOK_NAMN,
@@ -24,7 +24,7 @@ import { EkonomiskIntegrationService } from './ei.service';
 
 @Component({
   selector: 'app-ei-profil-mappning',
-  imports: [FormsModule, RouterLink, EiBegreppComponent, EiKallaComponent, EiDialogComponent],
+  imports: [FormsModule, RouterLink, EiKallaComponent, EiDialogComponent],
   template: `
     <div class="flex items-center justify-between gap-4 flex-wrap px-5 py-4">
       <p class="text-sm text-text-secondary max-w-[80ch]">
@@ -40,11 +40,11 @@ import { EkonomiskIntegrationService } from './ei.service';
       <table class="w-full text-sm">
         <thead>
           <tr class="border-y border-border">
-            <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Dimension <app-ei-begrepp term="Dimension" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Bokförs i <app-ei-begrepp term="Bokförs i" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Värde i kontering <app-ei-begrepp term="Värde i kontering" /></span></th>
-            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Värdelista <app-ei-begrepp term="Värdelista" /></span></th>
+            <th scope="col" [class]="k.th + ' pl-5'"><span class="inline-flex items-center gap-1">Attribut</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Dimension</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Bokförs i</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Värde i kontering</span></th>
+            <th scope="col" [class]="k.th"><span class="inline-flex items-center gap-1">Värdelista</span></th>
             <th scope="col" [class]="k.th">Används i</th>
             <th scope="col" class="pl-4 pr-5 py-2.5 w-24"><span class="sr-only">Åtgärder</span></th>
           </tr>

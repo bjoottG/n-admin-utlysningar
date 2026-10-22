@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EI_BAS, EiBegreppComponent, EiDialogComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
+import { EI_BAS, EiDialogComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
 import {
   ARENDEFALT_NAMN,
   BOK_NAMN,
@@ -31,11 +31,11 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
 
 @Component({
   selector: 'app-ei-profil-guide',
-  imports: [FormsModule, EiRamComponent, EiBegreppComponent, EiDialogComponent, EiNotisComponent, EiPlaneraComponent],
+  imports: [FormsModule, EiRamComponent, EiDialogComponent, EiNotisComponent, EiPlaneraComponent],
   template: `
     <app-ei-ram flik="profiler" [brodsmulor]="[{ text: 'Ny integrationsprofil' }]">
       <div class="max-w-[1100px]">
-        <h2 class="flex items-center gap-1 text-xl font-semibold text-text mb-4">Ny integrationsprofil <app-ei-begrepp term="Integrationsprofil" /></h2>
+        <h2 class="flex items-center gap-1 text-xl font-semibold text-text mb-4">Ny integrationsprofil</h2>
 
         <!-- Stegindikator -->
         <ol class="flex items-center gap-2 mb-5 list-none p-0 flex-wrap" aria-label="Steg">
@@ -97,7 +97,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
             @case (2) {
               <h3 class="text-base font-semibold">2. Flöden och böcker</h3>
               <fieldset>
-                <legend [class]="k.etikett + ' inline-flex items-center gap-1'">Flöden <app-ei-begrepp term="Flöde" /></legend>
+                <legend [class]="k.etikett + ' inline-flex items-center gap-1'">Flöden</legend>
                 <div class="flex gap-6">
                   @for (f of floden; track f) {
                     <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -108,7 +108,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
                 </div>
               </fieldset>
               <fieldset>
-                <legend [class]="k.etikett + ' inline-flex items-center gap-1'">Böcker <app-ei-begrepp term="Bokförs i" /></legend>
+                <legend [class]="k.etikett + ' inline-flex items-center gap-1'">Böcker</legend>
                 <div class="flex flex-wrap gap-x-6 gap-y-2">
                   @for (b of bocker; track b) {
                     <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -123,7 +123,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
 
             <!-- 3. Attribut -->
             @case (3) {
-              <h3 class="flex items-center gap-1 text-base font-semibold">3. Attribut <app-ei-begrepp term="Attribut" /></h3>
+              <h3 class="flex items-center gap-1 text-base font-semibold">3. Attribut</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 @for (a of systemAttribut(); track a.id) {
                   <label class="flex items-start gap-2 p-3 border border-border-muted text-sm cursor-pointer hover:bg-component-hover">
@@ -136,7 +136,7 @@ const STEG = ['Grunduppgifter', 'Flöden och böcker', 'Attribut', 'Mappning', '
 
             <!-- 4. Mappning -->
             @case (4) {
-              <h3 class="flex items-center gap-1 text-base font-semibold">4. Mappning <app-ei-begrepp term="Mappning" /></h3>
+              <h3 class="flex items-center gap-1 text-base font-semibold">4. Mappning</h3>
               <p class="text-sm text-text-secondary">Förifyllt. Värdelistor får vara tomma här och fylls på i profilen efteråt.</p>
               <div class="overflow-x-auto -mx-6">
                 <table class="w-full text-sm">

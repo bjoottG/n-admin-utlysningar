@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { EI_BAS, EiBegreppComponent, EiKallaComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
+import { EI_BAS, EiKallaComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
 import {
   ARENDEFALT_NAMN,
   Category,
@@ -25,11 +25,11 @@ const UTVECKLARE_ETIKETT =
 
 @Component({
   selector: 'app-ei-ekonomisystem-lista',
-  imports: [RouterLink, EiRamComponent, EiBegreppComponent, EiKallaComponent],
+  imports: [RouterLink, EiRamComponent, EiKallaComponent],
   template: `
     <app-ei-ram flik="ekonomisystem">
       <h2 class="flex items-center gap-1 text-lg font-semibold text-text mb-3">
-        Ekonomisystem <app-ei-begrepp term="Ekonomisystem" />
+        Ekonomisystem
       </h2>
       <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 list-none p-0 m-0">
         @for (s of service.system(); track s.id) {
@@ -92,7 +92,7 @@ interface Anvandning {
 
 @Component({
   selector: 'app-ei-ekonomisystem-detalj',
-  imports: [RouterLink, EiRamComponent, EiBegreppComponent, EiKallaComponent, EiNotisComponent],
+  imports: [RouterLink, EiRamComponent, EiKallaComponent, EiNotisComponent],
   template: `
     @if (system(); as s) {
       <app-ei-ram flik="ekonomisystem" [brodsmulor]="[{ text: s.name }]">
@@ -129,7 +129,7 @@ interface Anvandning {
           <!-- 5.1 Attribut -->
           <section id="ei-attribut" class="bg-surface border border-border">
             <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-              Attribut <app-ei-begrepp term="Attribut" />
+              Attribut
               <app-ei-kalla class="ml-2" [kalla]="s.attributeDescriptionsSource" />
               @if (s.attributeDescriptionsSource === 'assumption') {
                 <span class="text-[13px] font-normal text-text-muted">(beskrivningarna)</span>
@@ -139,10 +139,10 @@ interface Anvandning {
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-border text-left">
-                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold"><span class="inline-flex items-center gap-1">Attribut <app-ei-begrepp term="Attribut" /></span></th>
+                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold"><span class="inline-flex items-center gap-1">Attribut</span></th>
                     <th scope="col" class="px-4 py-2.5 font-semibold">Beskrivning</th>
-                    <th scope="col" class="px-4 py-2.5 font-semibold whitespace-nowrap"><span class="inline-flex items-center gap-1">Kan mappas till <app-ei-begrepp term="Dimension" /></span></th>
-                    <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold whitespace-nowrap"><span class="inline-flex items-center gap-1">Används i profiler <app-ei-begrepp term="Integrationsprofil" /></span></th>
+                    <th scope="col" class="px-4 py-2.5 font-semibold whitespace-nowrap"><span class="inline-flex items-center gap-1">Kan mappas till</span></th>
+                    <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold whitespace-nowrap"><span class="inline-flex items-center gap-1">Används i profiler</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,13 +171,13 @@ interface Anvandning {
           <!-- 5.2 Dimensioner -->
           <section id="ei-dimensioner" class="bg-surface border border-border">
             <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-              Dimensioner <app-ei-begrepp term="Dimension" />
+              Dimensioner
             </h3>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-border text-left">
-                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold"><span class="inline-flex items-center gap-1">Dimension <app-ei-begrepp term="Dimension" /></span></th>
+                    <th scope="col" class="pl-5 pr-4 py-2.5 font-semibold"><span class="inline-flex items-center gap-1">Dimension</span></th>
                     <th scope="col" class="px-4 py-2.5 font-semibold">Beskrivning</th>
                     <th scope="col" class="pl-4 pr-5 py-2.5 font-semibold">Används av</th>
                   </tr>
@@ -206,7 +206,7 @@ interface Anvandning {
           <!-- 5.3 Mappningsmatris -->
           <section id="ei-matris" class="bg-surface border border-border">
             <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-              Mappningsmatris <app-ei-begrepp term="Mappning" />
+              Mappningsmatris
             </h3>
             <div class="overflow-x-auto">
               <table class="text-sm border-collapse min-w-full">
@@ -253,7 +253,7 @@ interface Anvandning {
             <!-- 5.4 Böcker -->
             <section id="ei-bocker" class="bg-surface border border-border">
               <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-                Böcker (transaktionstyper) <app-ei-begrepp term="Bokförs i" />
+                Böcker (transaktionstyper)
               </h3>
               <ul class="px-5 py-3 space-y-1.5 list-none m-0 text-sm">
                 @for (b of s.transactionTypes; track b.code) {
@@ -266,7 +266,7 @@ interface Anvandning {
             <!-- 5.5 Flöden -->
             <section id="ei-floden" class="bg-surface border border-border">
               <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-                Flöden <app-ei-begrepp term="Flöde" />
+                Flöden
               </h3>
               <ul class="px-5 py-3 space-y-1.5 list-none m-0 text-sm">
                 @for (f of s.flows; track f.code) {
@@ -278,7 +278,7 @@ interface Anvandning {
             <!-- 5.6 Värdeursprung -->
             <section id="ei-ursprung" class="bg-surface border border-border">
               <h3 class="flex items-center gap-1 px-5 py-3 text-base font-semibold text-text border-b border-border-muted">
-                Värdeursprung <app-ei-begrepp term="Värde i kontering" />
+                Värdeursprung
               </h3>
               <dl class="px-5 py-3 space-y-2.5 text-sm">
                 <div><dt class="font-medium">{{ lage.SELECTABLE }}</dt><dd class="text-text-secondary">Värdet väljs ur värdelistan när en kontering skapas.</dd></div>

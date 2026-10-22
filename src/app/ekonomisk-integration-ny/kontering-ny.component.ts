@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
-import { EI_BAS, EiBegreppComponent, EiKodstrangComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
+import { EI_BAS, EiKodstrangComponent, EiNotisComponent, EiRamComponent, K } from './ei-delade';
 import {
   FLODE_NAMN,
   Flow,
@@ -29,7 +29,6 @@ import {
     RouterLink,
     DatumValjareComponent,
     EiRamComponent,
-    EiBegreppComponent,
     EiKodstrangComponent,
     EiNotisComponent,
     EiVardefaltComponent,
@@ -41,7 +40,7 @@ import {
     <app-ei-ram flik="konteringar" [brodsmulor]="[{ text: kopia() ? 'Skapa kopia' : 'Ny kontering' }]">
       <form (ngSubmit)="spara('DRAFT')" novalidate class="max-w-[960px] space-y-5">
         <h2 class="flex items-center gap-1 text-xl font-semibold text-text">
-          {{ kopia() ? 'Skapa kopia av ' + service.konteringNamn(kopia()!) : 'Ny kontering' }} <app-ei-begrepp term="Kontering" />
+          {{ kopia() ? 'Skapa kopia av ' + service.konteringNamn(kopia()!) : 'Ny kontering' }}
         </h2>
         @if (kopia()) {
           <app-ei-notis>
@@ -53,7 +52,7 @@ import {
         <section class="bg-surface border border-border p-5 space-y-5">
           <!-- Integrationsprofil -->
           <div>
-            <label for="ei-n-profil" [class]="k.etikett + ' inline-flex items-center gap-1'">Integrationsprofil <span class="text-error" aria-hidden="true">*</span> <app-ei-begrepp term="Integrationsprofil" /></label>
+            <label for="ei-n-profil" [class]="k.etikett + ' inline-flex items-center gap-1'">Integrationsprofil <span class="text-error" aria-hidden="true">*</span></label>
             <select id="ei-n-profil" name="profil" [ngModel]="profilId()" (ngModelChange)="valjProfil($event)" [class]="k.falt"
               [disabled]="!!kopia()" [class.border-border-error]="visaFel(fel().profil)">
               <option value="">– Välj integrationsprofil –</option>
@@ -73,10 +72,10 @@ import {
 
           <!-- Nyckel -->
           <fieldset class="space-y-4">
-            <legend class="flex items-center gap-1 text-base font-semibold text-text mb-1">Nyckel <app-ei-begrepp term="Uppslag" /></legend>
+            <legend class="flex items-center gap-1 text-base font-semibold text-text mb-1">Nyckel</legend>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="ei-n-fm" [class]="k.etikett + ' inline-flex items-center gap-1'">Finansieringsmedel <span class="text-error" aria-hidden="true">*</span> <app-ei-begrepp term="Finansieringsmedel" /></label>
+                <label for="ei-n-fm" [class]="k.etikett + ' inline-flex items-center gap-1'">Finansieringsmedel <span class="text-error" aria-hidden="true">*</span></label>
                 <select id="ei-n-fm" name="fm" [ngModel]="fmId()" (ngModelChange)="fmId.set($event)" [class]="k.falt"
                   [class.border-border-error]="visaFel(fel().fm)">
                   <option value="">– Välj finansieringsmedel –</option>
@@ -89,7 +88,7 @@ import {
                 }
               </div>
               <div>
-                <label for="ei-n-beslut" [class]="k.etikett + ' inline-flex items-center gap-1'">Beslutande organisation <span class="text-error" aria-hidden="true">*</span> <app-ei-begrepp term="Beslutande organisation" /></label>
+                <label for="ei-n-beslut" [class]="k.etikett + ' inline-flex items-center gap-1'">Beslutande organisation <span class="text-error" aria-hidden="true">*</span></label>
                 <select id="ei-n-beslut" name="beslut" [ngModel]="beslutId()" (ngModelChange)="beslutId.set($event)" [class]="k.falt"
                   [class.border-border-error]="visaFel(fel().beslut)">
                   <option value="">– Välj beslutande organisation –</option>
@@ -103,7 +102,7 @@ import {
             @if (profil(); as p) {
               @if (p.flows.length > 1) {
                 <fieldset>
-                  <legend [class]="k.etikett + ' inline-flex items-center gap-1'">Flöde <span class="text-error" aria-hidden="true">*</span> <app-ei-begrepp term="Flöde" /></legend>
+                  <legend [class]="k.etikett + ' inline-flex items-center gap-1'">Flöde <span class="text-error" aria-hidden="true">*</span></legend>
                   <div class="flex items-center gap-5">
                     @for (f of p.flows; track f) {
                       <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -152,7 +151,7 @@ import {
 
           <section class="bg-surface border border-border p-5">
             <div class="max-w-[220px]">
-              <label for="ei-n-fran" [class]="k.etikett + ' inline-flex items-center gap-1'">Giltig från <span class="text-error" aria-hidden="true">*</span> <app-ei-begrepp term="Version" /></label>
+              <label for="ei-n-fran" [class]="k.etikett + ' inline-flex items-center gap-1'">Giltig från <span class="text-error" aria-hidden="true">*</span></label>
               <app-datum-valjare inputId="ei-n-fran" etikett="Giltig från" [varde]="giltigFran()" (vardeChange)="giltigFran.set($event)" />
               @if (visaFel(fel().giltigFran); as f) {
                 <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ f }}</p>

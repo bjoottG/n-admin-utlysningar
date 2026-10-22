@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
-import { EI_BAS, EiBegreppComponent, EiDialogComponent, EiKallaComponent, EiNotisComponent, K } from './ei-delade';
+import { EI_BAS, EiDialogComponent, EiKallaComponent, EiNotisComponent, K } from './ei-delade';
 import { AllowedValue, Mapping, IntegrationProfile, PostingConfig, aktivaVarden, idag } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
 
@@ -53,13 +53,13 @@ export function tolkaInklistrat(text: string, befintliga: string[]): { nya: stri
 
 @Component({
   selector: 'app-ei-profil-vardelistor',
-  imports: [FormsModule, RouterLink, DatumValjareComponent, EiBegreppComponent, EiDialogComponent, EiKallaComponent, EiNotisComponent],
+  imports: [FormsModule, RouterLink, DatumValjareComponent, EiDialogComponent, EiKallaComponent, EiNotisComponent],
   template: `
     <div class="grid grid-cols-[240px_1fr] min-h-[420px]">
       <!-- Vänster: attribut med värdelista -->
       <nav class="border-r border-border-muted py-3" aria-label="Attribut med värdelista">
         <h3 class="flex items-center gap-1 px-4 pb-2 text-[13px] font-semibold text-text-muted uppercase tracking-wide">
-          Attribut <app-ei-begrepp term="Attribut" />
+          Attribut
         </h3>
         <ul class="list-none m-0 p-0">
           @for (m of medLista(); track m.attributeId) {
@@ -85,7 +85,7 @@ export function tolkaInklistrat(text: string, befintliga: string[]): { nya: stri
           <div class="px-5 pt-4 space-y-3">
             <div class="flex items-center justify-between gap-3 flex-wrap">
               <h3 class="flex items-center gap-1 text-base font-semibold text-text">
-                Värdelista: {{ namn }} <app-ei-begrepp term="Värdelista" />
+                Värdelista: {{ namn }}
               </h3>
               <div class="flex items-center gap-2">
                 <button type="button" (click)="oppnaKlistra()" [class]="k.sekundarLiten">

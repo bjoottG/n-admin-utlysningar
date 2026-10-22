@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { EI_BAS, EiBegreppComponent, EiRamComponent, K } from './ei-delade';
+import { EI_BAS, EiRamComponent, K } from './ei-delade';
 import { KONTERINGSSTATUS_NAMN, PostingConfigStatus } from './ei-modell';
 import { EkonomiskIntegrationService } from './ei.service';
 import { EiKonteringTabellComponent } from './kontering-tabell.component';
@@ -9,12 +9,12 @@ import { EiTestaUppslagComponent } from './testa-uppslag.component';
 
 @Component({
   selector: 'app-ei-konteringar-lista',
-  imports: [FormsModule, RouterLink, EiRamComponent, EiBegreppComponent, EiKonteringTabellComponent, EiTestaUppslagComponent],
+  imports: [FormsModule, RouterLink, EiRamComponent, EiKonteringTabellComponent, EiTestaUppslagComponent],
   template: `
     <app-ei-ram flik="konteringar">
       <div class="flex items-center justify-between gap-4 flex-wrap mb-1">
         <h2 class="flex items-center gap-1 text-lg font-semibold text-text">
-          Konteringar <app-ei-begrepp term="Kontering" />
+          Konteringar
         </h2>
         <div class="flex items-center gap-2">
           <button type="button" (click)="uppslagOppen.set(true)" [class]="k.sekundar">

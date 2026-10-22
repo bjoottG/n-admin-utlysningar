@@ -7,7 +7,6 @@ import { DatumValjareComponent } from '../delade/datum-valjare.component';
 import {
   Brodsmula,
   EI_BAS,
-  EiBegreppComponent,
   EiDialogComponent,
   EiKallaComponent,
   EiNotisComponent,
@@ -69,7 +68,6 @@ interface SparrForm {
     RouterLink,
     DatumValjareComponent,
     EiRamComponent,
-    EiBegreppComponent,
     EiKallaComponent,
     EiNotisComponent,
     EiDialogComponent,
@@ -177,19 +175,19 @@ interface SparrForm {
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Flöden <app-ei-begrepp term="Flöde" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Flöden</h3>
                       <ul class="text-sm space-y-1 list-none m-0 p-0">
                         @for (f of p.flows; track f) { <li>{{ flodeNamn[f] }} <span class="font-mono text-[12px] text-text-muted">({{ f }})</span></li> }
                       </ul>
                     </section>
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Böcker <app-ei-begrepp term="Bokförs i" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Böcker</h3>
                       <ul class="text-sm space-y-1 list-none m-0 p-0">
                         @for (b of p.transactionTypes; track b) { <li>{{ bokNamn[b] }} <span class="font-mono text-[12px] text-text-muted">({{ b }})</span></li> }
                       </ul>
                     </section>
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Attribut <app-ei-begrepp term="Attribut" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Attribut</h3>
                       <dl class="text-sm space-y-1.5">
                         @for (g of attributGrupper(); track g.namn) {
                           <div>
@@ -201,7 +199,7 @@ interface SparrForm {
                       <button type="button" (click)="valjFlik('mappning')" class="mt-2 text-sm" [class]="k.lank">Visa mappningen</button>
                     </section>
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Konteringar <app-ei-begrepp term="Kontering" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Konteringar</h3>
                       <ul class="text-sm space-y-1 list-none m-0 p-0">
                         @for (s of konteringStatusar; track s) {
                           <li class="flex justify-between max-w-[200px]"><span>{{ konteringStatusNamn[s] }}</span><span class="font-medium">{{ antalKonteringar(s) }}</span></li>
@@ -210,7 +208,7 @@ interface SparrForm {
                       <button type="button" (click)="valjFlik('konteringar')" class="mt-2 text-sm" [class]="k.lank">Visa konteringarna</button>
                     </section>
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Spärrar <app-ei-begrepp term="Spärrperiod" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Spärrar</h3>
                       @if (aktuellaSparrar().length) {
                         <ul class="text-sm space-y-1.5 list-none m-0 p-0">
                           @for (s of aktuellaSparrar(); track s.id) {
@@ -242,7 +240,7 @@ interface SparrForm {
                       }
                     </section>
                     <section class="border border-border p-4">
-                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Betalar ut för <app-ei-begrepp term="Beslutande organisation" /></h3>
+                      <h3 class="flex items-center gap-1 text-sm font-semibold mb-2">Betalar ut för</h3>
                       @if (betalarUtFor().length) {
                         <ul class="text-sm space-y-1 list-none m-0 p-0">
                           @for (b of betalarUtFor(); track $index) { <li>{{ b }}</li> }
@@ -257,7 +255,7 @@ interface SparrForm {
                   <!-- Tekniska egenskaper (skrivskyddat) -->
                   <section class="border border-border">
                     <h3 class="flex items-center gap-1 px-4 py-2.5 text-sm font-semibold border-b border-border-muted">
-                      Tekniska egenskaper <app-ei-begrepp term="Tekniska egenskaper" />
+                      Tekniska egenskaper
                       <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm bg-surface-neutral text-on-surface-neutral border border-border">
                         <span class="material-symbols-outlined text-[14px]" aria-hidden="true">lock</span>Sätts av utvecklare
                       </span>
