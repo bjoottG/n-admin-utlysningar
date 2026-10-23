@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatumValjareComponent } from '../delade/datum-valjare.component';
@@ -9,8 +9,10 @@ import {
   PROFILSTATUS_NAMN,
   PostingConfig,
   PostingConfigStatus,
+  IntegrationProfile,
   gallandeVersion,
   idag,
+  profilAktivPa,
   profilStatus,
   sorteradeVersioner,
 } from './ei-modell';
@@ -50,25 +52,43 @@ import {
         }
 
         <section class="bg-surface border border-border p-5 space-y-5">
-          <!-- Integrationsprofil -->
-          <div>
-            <label for="ei-n-profil" [class]="k.etikett + ' inline-flex items-center gap-1'">Integrationsprofil <span class="text-error" aria-hidden="true">*</span></label>
-            <select id="ei-n-profil" name="profil" [ngModel]="profilId()" (ngModelChange)="valjProfil($event)" [class]="k.falt"
-              [disabled]="!!kopia()" [class.border-border-error]="visaFel(fel().profil)">
-              <option value="">– Välj integrationsprofil –</option>
-              @for (p of service.profiler(); track p.id) {
-                @let st = profilStatus(p);
-                <option [value]="p.id" [disabled]="st === 'ENDED'">
-                  {{ service.hamtaOrg(p.organisationId)?.name }} · {{ service.systemNamn(p) }} · {{ p.name }} ({{ profilStatusNamn[st] }})
-                </option>
+          <!-- Utbetalande organisation -->
+          <div class="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-4">
+            <div>
+              <label for="ei-n-org" [class]="k.etikett + ' inline-flex items-center gap-1'">Utbetalande organisation <span class="text-error" aria-hidden="true">*</span></label>
+              <select id="ei-n-org" name="org" [ngModel]="orgId()" (ngModelChange)="orgId.set($event)" [class]="k.falt"
+                [disabled]="!!kopia()" [class.border-border-error]="visaFel(fel().org) || saknarProfil()">
+                <option value="">– Välj utbetalande organisation –</option>
+                @for (o of service.organisationer(); track o.id) { <option [value]="o.id">{{ o.name }}</option> }
+              </select>
+              @if (saknarProfil()) {
+                <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ fel().org }}</p>
+              } @else if (visaFel(fel().org); as f) {
+                <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ f }}</p>
+              } @else if (kopia()) {
+                <p [class]="k.hjalp">En kopia hamnar i samma integrationsprofil.</p>
               }
-            </select>
-            @if (visaFel(fel().profil); as f) {
-              <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ f }}</p>
-            } @else {
-              <p [class]="k.hjalp">{{ kopia() ? 'En kopia hamnar i samma integrationsprofil.' : 'Avslutade profiler kan inte väljas.' }}</p>
-            }
+            </div>
+            <div>
+              <label for="ei-n-fran" [class]="k.etikett + ' inline-flex items-center gap-1'">Giltig från <span class="text-error" aria-hidden="true">*</span></label>
+              <app-datum-valjare inputId="ei-n-fran" etikett="Giltig från" [varde]="giltigFran()" (vardeChange)="giltigFran.set($event)" />
+              @if (visaFel(fel().giltigFran); as f) {
+                <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ f }}</p>
+              }
+            </div>
           </div>
+          @if (profil(); as p) {
+            <div class="px-4 py-3 bg-surface-subtle border border-border-muted" aria-live="polite">
+              <span class="block text-[12px] text-text-muted">Integrationsprofil</span>
+              <span class="text-sm">
+                <a [routerLink]="bas + '/integrationsprofiler/' + p.id" [class]="k.lank">{{ p.name }}</a>
+                · {{ service.systemNamn(p) }} ({{ profilStatusNamn[profilStatus(p)] }})
+              </span>
+              @if (!last()) {
+                <span class="block text-[12px] text-text-muted">Den integrationsprofil som gäller för organisationen {{ giltigFran() }}.</span>
+              }
+            </div>
+          }
 
           <!-- Nyckel -->
           <fieldset class="space-y-4">
@@ -149,16 +169,6 @@ import {
           <app-ei-fran-profilen [profil]="p" [flode]="flode()" />
           <app-ei-vid-utbetalning [profil]="p" />
 
-          <section class="bg-surface border border-border p-5">
-            <div class="max-w-[220px]">
-              <label for="ei-n-fran" [class]="k.etikett + ' inline-flex items-center gap-1'">Giltig från <span class="text-error" aria-hidden="true">*</span></label>
-              <app-datum-valjare inputId="ei-n-fran" etikett="Giltig från" [varde]="giltigFran()" (vardeChange)="giltigFran.set($event)" />
-              @if (visaFel(fel().giltigFran); as f) {
-                <p [class]="k.fel"><span class="material-symbols-outlined text-[16px]">error</span>{{ f }}</p>
-              }
-            </div>
-          </section>
-
           <app-ei-kodstrang [rader]="kodrader()" [system]="service.systemNamn(p)" />
         }
 
@@ -191,7 +201,9 @@ export class EiKonteringNyComponent {
     this.service.hamtaKontering(this.route.snapshot.queryParamMap.get('kopiaAv')),
   );
 
-  readonly profilId = signal('');
+  readonly orgId = signal('');
+  /** Låst profil: vid kopia eller när konteringen skapas från en profils flik Konteringar (?profil=). */
+  readonly last = signal<IntegrationProfile | null>(null);
   readonly fmId = signal('');
   readonly beslutId = signal('');
   readonly flode = signal<Flow>('UTB');
@@ -206,7 +218,7 @@ export class EiKonteringNyComponent {
     const k = this.kopia();
     if (k) {
       const v = gallandeVersion(k) ?? sorteradeVersioner(k).slice(-1)[0];
-      this.valjProfil(k.profileId);
+      this.lasProfil(this.service.hamtaProfil(k.profileId));
       this.flode.set(k.flow);
       this.fmId.set(k.fundingSourceId);
       this.beslutId.set(k.decidingOrganisationId);
@@ -214,21 +226,39 @@ export class EiKonteringNyComponent {
       this.konsumtion.set(v?.useConsumptionAccount ?? false);
     } else {
       const p = this.service.hamtaProfil(this.route.snapshot.queryParamMap.get('profil'));
-      if (p && profilStatus(p) !== 'ENDED') this.valjProfil(p.id);
+      if (p && profilStatus(p) !== 'ENDED') this.lasProfil(p);
     }
+
+    // Byts profilen: anpassa flöde och behåll bara värden för profilens valbara attribut.
+    effect(() => {
+      const p = this.profil();
+      if (!p) return;
+      untracked(() => {
+        if (!p.flows.includes(this.flode())) this.flode.set(p.flows[0] ?? 'UTB');
+        const valbara = new Set(p.mappings.filter((m) => m.mode === 'SELECTABLE').map((m) => m.attributeId));
+        this.varden.update((v) => Object.fromEntries(Object.entries(v).filter(([a]) => valbara.has(a))));
+      });
+    });
   }
 
-  readonly profil = computed(() => this.service.hamtaProfil(this.profilId()));
-
-  valjProfil(id: string): void {
-    this.profilId.set(id);
-    const p = this.service.hamtaProfil(id);
+  private lasProfil(p: IntegrationProfile | null): void {
     if (!p) return;
-    if (!p.flows.includes(this.flode())) this.flode.set(p.flows[0] ?? 'UTB');
-    // Behåll bara värden för profilens valbara attribut.
-    const valbara = new Set(p.mappings.filter((m) => m.mode === 'SELECTABLE').map((m) => m.attributeId));
-    this.varden.update((v) => Object.fromEntries(Object.entries(v).filter(([a]) => valbara.has(a))));
+    this.last.set(p);
+    this.orgId.set(p.organisationId);
   }
+
+  /** Den låsta profilen, annars den profil som gäller för organisationen på giltig från-datumet (högst en, P9). */
+  readonly profil = computed(() => {
+    const l = this.last();
+    if (l && l.organisationId === this.orgId()) return l;
+    const org = this.orgId();
+    const datum = this.giltigFran();
+    if (!org || !datum) return null;
+    return this.service.profiler().find((p) => p.organisationId === org && profilAktivPa(p, datum)) ?? null;
+  });
+
+  /** Vald organisation saknar gällande profil – visas direkt, inte först vid spara. */
+  readonly saknarProfil = computed(() => !!this.orgId() && !!this.giltigFran() && !this.profil());
 
   readonly nyckel = computed(() => ({
     fundingSourceId: this.fmId(),
@@ -247,10 +277,12 @@ export class EiKonteringNyComponent {
 
   /** K1 och K4. */
   readonly fel = computed(() => {
-    const fel: { profil?: string; fm?: string; beslut?: string; giltigFran?: string } = {};
+    const fel: { org?: string; fm?: string; beslut?: string; giltigFran?: string } = {};
     const p = this.profil();
-    if (!p) fel.profil = 'Välj en integrationsprofil.';
-    else if (!p.flows.includes(this.flode())) fel.profil = 'Flödet finns inte i integrationsprofilen.';
+    if (!this.orgId()) fel.org = 'Välj utbetalande organisation.';
+    else if (!p && this.giltigFran())
+      fel.org = `${this.service.hamtaOrg(this.orgId())?.name} har ingen aktiv integrationsprofil ${this.giltigFran()}.`;
+    else if (p && !p.flows.includes(this.flode())) fel.org = 'Flödet finns inte i integrationsprofilen.';
     if (!this.fmId()) fel.fm = 'Välj finansieringsmedel.';
     if (!this.beslutId()) fel.beslut = 'Välj beslutande organisation.';
     if (!this.giltigFran()) fel.giltigFran = 'Ange giltig från.';
